@@ -1,6 +1,5 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
-import java.nio.file.Path
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.external.applications.external.strategies.BasicStateBasedChangeDiffProvider
@@ -15,8 +14,8 @@ class ExampleTest extends DiffProvidingStateBasedChangeTest {
 	
 	@Test
 	def void firstTest() {
-		val changedModelPath = Path.of("testresources").resolve("Renamed.uml")
+		val changedModelPath = resourcesDirectory().resolve("Renamed.uml")
 		resolveChangedState(changedModelPath)
-		logChanges()
+		printChanges()
 	}
 }

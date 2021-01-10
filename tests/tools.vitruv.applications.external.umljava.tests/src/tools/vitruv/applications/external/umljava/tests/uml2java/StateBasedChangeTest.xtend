@@ -1,12 +1,12 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.nio.file.Path
+import java.util.List
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.xmi.XMLResource
-import org.eclipse.uml2.uml.resource.UMLResource
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
@@ -15,10 +15,10 @@ import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestProject
-import java.util.List
+import org.eclipse.emf.ecore.util.EcoreUtil
 
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-	static val MODELPATH = "testresources"
+	static val RESOURCESPATH = "testresources"
 	static val INITIALMODELNAME = "Example.uml"
 	
 	protected var Path testProjectFolder
@@ -34,7 +34,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		this.stateBasedStrategyLogger.reset()
 		this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
 		
-		preloadModel(Path.of(MODELPATH).resolve(INITIALMODELNAME), INITIALMODELNAME)
+		preloadModel(resourcesDirectory.resolve(INITIALMODELNAME), INITIALMODELNAME)
 	}
 	
 	override protected getChangePropagationSpecifications() {
@@ -56,24 +56,28 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		return testProjectFolder.resolve("model")
 	}
 	
+	def resourcesDirectory() {
+		return Path.of(RESOURCESPATH)
+	}
+	
 	private def preloadModel(Path path, String modelName) {
 		val modelPath = modelsDirectory.resolve(modelName)
+		val originalModel = loadModel(path)
 		
 		//createAndSynchronizeModel
 		sourceModel = resourceAt(modelPath)
 		getChangeRecorder().addToRecording(sourceModel)
-		sourceModel.contents += loadModel(path).getContents().get(0)
+		sourceModel.contents.addAll(EcoreUtil.copyAll(originalModel.contents))
 		
 		//preserve original ids
-		val originalModel = loadModel(path)
 		if (originalModel instanceof XMLResource && sourceModel instanceof XMLResource) {
 			var i = 0;
-			while (i < originalModel.getContents().size() && i < sourceModel.getContents().size) {
-				propagateID(originalModel.getContents().get(i), sourceModel.getContents().get(i))
+			while (i < originalModel.contents.size() && i < sourceModel.contents.size) {
+				propagateID(originalModel.contents.get(i), sourceModel.contents.get(i))
 				i += 1
 			}
 		}
-		saveAndSynchronizeChanges(originalModel.getContents().get(0))
+		saveAndSynchronizeChanges(originalModel.contents.get(0))
 	}
 	
 	private def void propagateID(EObject orig, EObject copy) {
