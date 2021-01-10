@@ -90,11 +90,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
 	}
 	
-	def logChanges() {
+	def void printChanges() {
 		println('''propagated changes:
-		«propagatedChanges»''')
+	«propagatedChanges»''')
 		println('''vitruvius changes:
-		«getDerivedChangeSequence()»''')
+	«getDerivedChangeSequence()»''')
 	}
 	
 }

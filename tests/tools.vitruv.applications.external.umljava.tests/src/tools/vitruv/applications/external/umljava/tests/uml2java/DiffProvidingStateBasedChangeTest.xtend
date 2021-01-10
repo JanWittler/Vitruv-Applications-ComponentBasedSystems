@@ -24,9 +24,11 @@ abstract class DiffProvidingStateBasedChangeTest extends StateBasedChangeTest {
 		return diffProviderLogger.getDiffs()
 	}
 	
-	override logChanges() {
-		super.logChanges()
+	override printChanges() {
+		super.printChanges()
 		println('''diffs:
-		«getDerivedDiffs()»''')
+	«FOR diff: getDerivedDiffs()»
+	«diff»
+«ENDFOR»''')
 	}
 }
