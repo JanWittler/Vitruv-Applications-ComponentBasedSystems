@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_U6DUIEOREeuCW9_lH5eJdg" name="Root">
+  <packagedElement xmi:type="uml:Package" xmi:id="_r9BggEOREeuCW9_lH5eJdg" name="com.example.first">
+    <packagedElement xmi:type="uml:Class" xmi:id="_o1w0oEOREeuCW9_lH5eJdg" name="Example">
+    </packagedElement>
+  </packagedElement>
+</uml:Model>
