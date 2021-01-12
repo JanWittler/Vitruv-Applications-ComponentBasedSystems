@@ -19,7 +19,8 @@ import tools.vitruv.testutils.TestProject
 
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	static val RESOURCESPATH = "testresources"
-	static val INITIALMODELNAME = "Example.uml"
+	static val INITIALMODELNAME = "Example"
+	static val MODELFILEEXTENSION ="uml"
 	
 	protected var Path testProjectFolder
 	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
@@ -34,7 +35,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		this.stateBasedStrategyLogger.reset()
 		this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
 		
-		preloadModel(resourcesDirectory.resolve(INITIALMODELNAME), INITIALMODELNAME)
+		preloadModel(resourcesDirectory.resolve(INITIALMODELNAME + "." + MODELFILEEXTENSION))
 	}
 	
 	override protected getChangePropagationSpecifications() {
@@ -56,7 +57,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	def getSourceModelVuri() {
-		val modelPath = modelsDirectory.resolve(INITIALMODELNAME)
+		val modelPath = modelsDirectory.resolve("Model." + MODELFILEEXTENSION)
 		return VURI.getInstance(modelPath.toString)
 	}
 	
@@ -65,10 +66,9 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		propagatedChanges = virtualModel.propagateChangedState(changedModel, getSourceModelVuri().EMFUri)
 	}
 	
-	private def preloadModel(Path path, String modelName) {
-		val modelPath = modelsDirectory.resolve(modelName)
+	private def preloadModel(Path path) {
 		val originalModel = loadModel(path)
-		createAndSynchronizeModel(modelPath.toString, EcoreUtil.copy(originalModel.contents.get(0)))
+		createAndSynchronizeModel(sourceModelVuri.toResolvedAbsolutePath, EcoreUtil.copy(originalModel.contents.get(0)))
 		
 		//preserve original ids
 		val model = virtualModel.getModelInstance(sourceModelVuri).resource
