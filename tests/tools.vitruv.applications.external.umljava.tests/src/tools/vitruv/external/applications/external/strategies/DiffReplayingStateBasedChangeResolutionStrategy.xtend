@@ -77,7 +77,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 	}
 
 	/**
-	 * Creates a new resource set, creates a resource and copies the content of the orignal resource.
+	 * Creates a new resource set, creates a resource and copies the content of the original resource.
 	 */
 	private def Resource copy(Resource resource) {
 		val resourceSet = new ResourceSetImpl
