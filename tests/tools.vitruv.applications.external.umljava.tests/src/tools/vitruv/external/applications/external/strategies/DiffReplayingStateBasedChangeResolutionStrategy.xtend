@@ -1,22 +1,23 @@
 package tools.vitruv.external.applications.external.strategies
 
-import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
-import org.eclipse.emf.ecore.resource.Resource
-import tools.vitruv.framework.uuid.UuidGeneratorAndResolver
-import org.eclipse.emf.ecore.EObject
-import java.util.List
-import tools.vitruv.framework.change.description.TransactionalChange
-import tools.vitruv.framework.change.recording.AtomicEmfChangeRecorder
-import org.eclipse.emf.compare.merge.IMerger
-import org.eclipse.emf.compare.merge.BatchMerger
-import org.eclipse.emf.common.util.BasicMonitor
-import tools.vitruv.framework.uuid.UuidGeneratorAndResolverImpl
-import tools.vitruv.framework.change.description.VitruviusChangeFactory
 import java.util.Collections
+import java.util.List
+import org.eclipse.emf.common.notify.Notifier
+import org.eclipse.emf.common.util.BasicMonitor
+import org.eclipse.emf.compare.Diff
+import org.eclipse.emf.compare.merge.BatchMerger
+import org.eclipse.emf.compare.merge.IMerger
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.emf.compare.Diff
-import org.eclipse.emf.common.notify.Notifier
+import org.eclipse.emf.ecore.xmi.XMLResource
+import tools.vitruv.framework.change.description.TransactionalChange
+import tools.vitruv.framework.change.description.VitruviusChangeFactory
+import tools.vitruv.framework.change.recording.AtomicEmfChangeRecorder
+import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
+import tools.vitruv.framework.uuid.UuidGeneratorAndResolver
+import tools.vitruv.framework.uuid.UuidGeneratorAndResolverImpl
 
 class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
 	val StateBasedChangeDiffProvider diffProvider
@@ -81,6 +82,23 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 		val resourceSet = new ResourceSetImpl
 		val copy = resourceSet.createResource(resource.URI)
 		copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
+		//preserve original ids
+		if (resource instanceof XMLResource && copy instanceof XMLResource) {
+			var i = 0;
+			while (i < resource.getContents().size() && i < copy.getContents().size) {
+				propagateID(resource.getContents().get(i), copy.getContents().get(i))
+				i += 1
+			}
+		}
 		return copy
+	}
+	
+	private def void propagateID(EObject orig, EObject copy) {
+		(copy.eResource() as XMLResource).setID(copy, (orig.eResource() as XMLResource).getID(orig));
+		var i = 0;
+		while (i < orig.eContents().size() && i < copy.eContents().size) {
+			propagateID(orig.eContents().get(i), copy.eContents().get(i))
+			i += 1
+		}
 	}
 }

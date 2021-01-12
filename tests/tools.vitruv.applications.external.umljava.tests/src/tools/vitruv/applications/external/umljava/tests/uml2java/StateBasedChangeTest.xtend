@@ -4,8 +4,8 @@ import java.nio.file.Path
 import java.util.List
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.emf.ecore.xmi.XMLResource
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
@@ -13,9 +13,9 @@ import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJa
 import tools.vitruv.external.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
+import tools.vitruv.framework.util.datatypes.VURI
 import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestProject
-import org.eclipse.emf.ecore.util.EcoreUtil
 
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	static val RESOURCESPATH = "testresources"
@@ -23,7 +23,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	
 	protected var Path testProjectFolder
 	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
-	@Accessors(PUBLIC_GETTER) var Resource sourceModel
 	@Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
 	
 	def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
@@ -31,6 +30,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	@BeforeEach
 	def void setup(@TestProject Path testProjectFolder) {
 		this.testProjectFolder = testProjectFolder
+		this.propagatedChanges = null
 		this.stateBasedStrategyLogger.reset()
 		this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
 		
@@ -47,12 +47,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		return stateBasedStrategyLogger.getChangeSequence()
 	}
 	
-	def resolveChangedState(Path changedModelPath) {
-		val changedModel = loadModel(changedModelPath)
-		propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModel?.URI)
-	}
-	
-	def modelsDirectory() {
+	def getModelsDirectory() {
 		return testProjectFolder.resolve("model")
 	}
 	
@@ -60,24 +55,31 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		return Path.of(RESOURCESPATH)
 	}
 	
+	def getSourceModelVuri() {
+		val modelPath = modelsDirectory.resolve(INITIALMODELNAME)
+		return VURI.getInstance(modelPath.toString)
+	}
+	
+	def resolveChangedState(Path changedModelPath) {
+		val changedModel = loadModel(changedModelPath)
+		propagatedChanges = virtualModel.propagateChangedState(changedModel, getSourceModelVuri().EMFUri)
+	}
+	
 	private def preloadModel(Path path, String modelName) {
 		val modelPath = modelsDirectory.resolve(modelName)
 		val originalModel = loadModel(path)
-		
-		//createAndSynchronizeModel
-		sourceModel = resourceAt(modelPath)
-		getChangeRecorder().addToRecording(sourceModel)
-		sourceModel.contents.addAll(EcoreUtil.copyAll(originalModel.contents))
+		createAndSynchronizeModel(modelPath.toString, EcoreUtil.copy(originalModel.contents.get(0)))
 		
 		//preserve original ids
-		if (originalModel instanceof XMLResource && sourceModel instanceof XMLResource) {
+		val model = virtualModel.getModelInstance(sourceModelVuri).resource
+		if (originalModel instanceof XMLResource && model instanceof XMLResource) {
 			var i = 0;
-			while (i < originalModel.contents.size() && i < sourceModel.contents.size) {
-				propagateID(originalModel.contents.get(i), sourceModel.contents.get(i))
+			while (i < originalModel.contents.size() && i < model.contents.size) {
+				propagateID(originalModel.contents.get(i), model.contents.get(i))
 				i += 1
 			}
+			model.save(emptyMap)
 		}
-		saveAndSynchronizeChanges(originalModel.contents.get(0))
 	}
 	
 	private def void propagateID(EObject orig, EObject copy) {
