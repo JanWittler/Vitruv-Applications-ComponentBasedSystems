@@ -48,6 +48,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 		// Create change sequences:
 		val diffs = compareStates(newState, currentStateCopy)
 		val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)
+		currentStateCopy.save(emptyMap)
 		return changeFactory.createCompositeChange(vitruvDiffs)
 	}
 
