@@ -119,7 +119,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	
 	def void assertDirectoriesEqual(File expected, File actual) {
 		var visitedFiles = new HashSet<File>()
-		for (File file: expected.listFiles()) {
+		for (File file: expected.listFiles().filter[f|!f.hidden]) {
 			val relativize = expected.toPath().relativize(file.toPath())
 			val fileInOther = actual.toPath().resolve(relativize).toFile()
 			visitedFiles += fileInOther
@@ -134,7 +134,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 				assertTrue(FileUtils.contentEquals(file, fileInOther), '''[incorrect file] «fileInOther»''')
 			}
 		}
-		for (File file: actual.listFiles()) {
+		for (File file: actual.listFiles().filter[f|!f.hidden]) {
 			assertTrue(visitedFiles.contains(file), '''[file should not exist] «file»''')
 		}
 	}
