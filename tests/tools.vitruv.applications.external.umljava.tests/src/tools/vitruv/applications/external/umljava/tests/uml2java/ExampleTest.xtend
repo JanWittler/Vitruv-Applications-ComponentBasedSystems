@@ -17,5 +17,8 @@ class ExampleTest extends DiffProvidingStateBasedChangeTest {
 		val changedModelPath = resourcesDirectory().resolve("Renamed.uml")
 		resolveChangedState(changedModelPath)
 		printChanges()
+		
+		val expectedTargetModel = resourcesDirectory().resolve("expected_src")
+		assertTargetModelEquals(expectedTargetModel)
 	}
 }

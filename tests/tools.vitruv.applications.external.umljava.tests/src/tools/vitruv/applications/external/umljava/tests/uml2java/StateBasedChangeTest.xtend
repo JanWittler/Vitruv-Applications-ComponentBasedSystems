@@ -1,7 +1,10 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
+import java.io.File
 import java.nio.file.Path
+import java.util.HashSet
 import java.util.List
+import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
@@ -16,6 +19,8 @@ import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
 import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestProject
+
+import static org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	static val RESOURCESPATH = "testresources"
@@ -68,7 +73,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	
 	private def preloadModel(Path path) {
 		val originalModel = loadModel(path)
-		createAndSynchronizeModel(sourceModelVuri.toResolvedAbsolutePath, EcoreUtil.copy(originalModel.contents.get(0)))
+		createAndSynchronizeModel(sourceModelVuri.toResolvedAbsolutePath, EcoreUtil.copy(originalModel.contents.head))
 		
 		//preserve original ids
 		val model = virtualModel.getModelInstance(sourceModelVuri).resource
@@ -101,6 +106,33 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	«propagatedChanges»''')
 		println('''vitruvius changes:
 	«getDerivedChangeSequence()»''')
+	}
+	
+	def assertTargetModelEquals(Path expected) {
+		val targetModelFolder = testProjectFolder.resolve("src")
+		assertDirectoriesEqual(expected.toFile(), targetModelFolder.toFile())
+	}
+	
+	def void assertDirectoriesEqual(File expected, File actual) {
+		var visitedFiles = new HashSet<File>()
+		for (File file: expected.listFiles()) {
+			val relativize = expected.toPath().relativize(file.toPath())
+			val fileInOther = actual.toPath().resolve(relativize).toFile()
+			visitedFiles += fileInOther
+			
+			assertTrue(fileInOther.exists, '''[missing file] «fileInOther»''')
+			assertTrue(file.isDirectory == fileInOther.isDirectory, '''[«fileInOther.isDirectory ? "dir instead of file" : "file instead of dir"»] «fileInOther»''')
+			
+			if (file.isDirectory) {
+				assertDirectoriesEqual(file, fileInOther)
+			}
+			else {
+				assertTrue(FileUtils.contentEquals(file, fileInOther), '''[incorrect file] «fileInOther»''')
+			}
+		}
+		for (File file: actual.listFiles()) {
+			assertTrue(visitedFiles.contains(file), '''[file should not exist] «file»''')
+		}
 	}
 	
 }
