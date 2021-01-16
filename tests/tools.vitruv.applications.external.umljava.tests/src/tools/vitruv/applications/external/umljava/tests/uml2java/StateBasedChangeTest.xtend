@@ -6,14 +6,13 @@ import java.util.HashSet
 import java.util.List
 import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
-import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.emf.ecore.xmi.XMLResource
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.external.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
@@ -81,23 +80,8 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		
 		//preserve original ids
 		val model = virtualModel.getModelInstance(sourceModelVuri).resource
-		if (originalModel instanceof XMLResource && model instanceof XMLResource) {
-			var i = 0;
-			while (i < originalModel.contents.size() && i < model.contents.size) {
-				propagateID(originalModel.contents.get(i), model.contents.get(i))
-				i += 1
-			}
-			model.save(emptyMap)
-		}
-	}
-	
-	private def void propagateID(EObject orig, EObject copy) {
-		(copy.eResource() as XMLResource).setID(copy, (orig.eResource() as XMLResource).getID(orig));
-		var i = 0;
-		while (i < orig.eContents().size() && i < copy.eContents().size) {
-			propagateID(orig.eContents().get(i), copy.eContents().get(i))
-			i += 1
-		}
+		ResourceUtil.copyIDs(originalModel, model)
+		model.save(emptyMap)
 	}
 	
 	def loadModel(Path path) {

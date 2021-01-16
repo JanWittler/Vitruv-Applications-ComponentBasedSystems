@@ -9,9 +9,7 @@ import org.eclipse.emf.compare.merge.BatchMerger
 import org.eclipse.emf.compare.merge.IMerger
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.Resource
-import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.emf.ecore.xmi.XMLResource
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.framework.change.description.TransactionalChange
 import tools.vitruv.framework.change.description.VitruviusChangeFactory
 import tools.vitruv.framework.change.recording.AtomicEmfChangeRecorder
@@ -44,7 +42,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 		}
 		// Setup resolver and copy state:
 		val uuidGeneratorAndResolver = new UuidGeneratorAndResolverImpl(resolver, resolver.resourceSet, true)
-		val currentStateCopy = currentState.copy
+		val currentStateCopy = ResourceUtil.copy(currentState)
 		// Create change sequences:
 		val diffs = compareStates(newState, currentStateCopy)
 		val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)
@@ -74,32 +72,5 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 		// Finish recording:
 		changeRecorder.endRecording
 		return changeRecorder.changes
-	}
-
-	/**
-	 * Creates a new resource set, creates a resource and copies the content of the original resource.
-	 */
-	private def Resource copy(Resource resource) {
-		val resourceSet = new ResourceSetImpl
-		val copy = resourceSet.createResource(resource.URI)
-		copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
-		//preserve original ids
-		if (resource instanceof XMLResource && copy instanceof XMLResource) {
-			var i = 0;
-			while (i < resource.getContents().size() && i < copy.getContents().size) {
-				propagateID(resource.getContents().get(i), copy.getContents().get(i))
-				i += 1
-			}
-		}
-		return copy
-	}
-	
-	private def void propagateID(EObject orig, EObject copy) {
-		(copy.eResource() as XMLResource).setID(copy, (orig.eResource() as XMLResource).getID(orig));
-		var i = 0;
-		while (i < orig.eContents().size() && i < copy.eContents().size) {
-			propagateID(orig.eContents().get(i), copy.eContents().get(i))
-			i += 1
-		}
 	}
 }
