@@ -29,22 +29,22 @@ class ResourceUtil {
 	 * @param source The resource to get the IDs from.
 	 * @param destination The resource to copy the IDs to.
 	 */
-	static def copyIDs(Resource source, Resource destination) {
-		if (source instanceof XMLResource && destination instanceof XMLResource) {
-			var i = 0;
-			while (i < source.contents.size && i < destination.contents.size) {
-				copyIDs(source.contents.get(i), destination.contents.get(i))
-				i += 1
-			}
-		}
+	static dispatch def copyIDs(Resource source, Resource destination) {
+		
 	}
 	
-	private static def void copyIDs(EObject source, EObject destination) {
-		(destination.eResource as XMLResource).setID(destination, (source.eResource as XMLResource).getID(source));
-		var i = 0;
-		while (i < source.eContents.size() && i < destination.eContents.size) {
-			copyIDs(source.eContents.get(i), destination.eContents.get(i))
-			i += 1
+	/**
+	 * Copies the IDs of the resource's elements to the destination.
+	 * @param source The resource to get the IDs from.
+	 * @param destination The resource to copy the IDs to.
+	 */
+	static dispatch def copyIDs(XMLResource source, XMLResource destination) {
+		val sourceIterator = source.allContents
+		val destinationIterator = destination.allContents
+		while (sourceIterator.hasNext && destinationIterator.hasNext) {
+			val sourceObject = sourceIterator.next
+			val destinationObject = destinationIterator.next
+			destination.setID(destinationObject, source.getID(sourceObject))
 		}
 	}
 }
