@@ -1,10 +1,7 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
-import java.io.File
 import java.nio.file.Path
-import java.util.HashSet
 import java.util.List
-import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
@@ -21,8 +18,6 @@ import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
-
-import static org.junit.jupiter.api.Assertions.assertTrue
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -94,33 +89,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	«propagatedChanges»''')
 		println('''vitruvius changes:
 	«getDerivedChangeSequence()»''')
-	}
-	
-	def assertTargetModelEquals(Path expected) {
-		val targetModelFolder = testProjectFolder.resolve("src")
-		assertDirectoriesEqual(expected.toFile(), targetModelFolder.toFile())
-	}
-	
-	def void assertDirectoriesEqual(File expected, File actual) {
-		var visitedFiles = new HashSet<File>()
-		for (File file: expected.listFiles().filter[f|!f.hidden]) {
-			val relativize = expected.toPath().relativize(file.toPath())
-			val fileInOther = actual.toPath().resolve(relativize).toFile()
-			visitedFiles += fileInOther
-			
-			assertTrue(fileInOther.exists, '''[missing file] «fileInOther»''')
-			assertTrue(file.isDirectory == fileInOther.isDirectory, '''[«fileInOther.isDirectory ? "dir instead of file" : "file instead of dir"»] «fileInOther»''')
-			
-			if (file.isDirectory) {
-				assertDirectoriesEqual(file, fileInOther)
-			}
-			else {
-				assertTrue(FileUtils.contentEquals(file, fileInOther), '''[incorrect file] «fileInOther»''')
-			}
-		}
-		for (File file: actual.listFiles().filter[f|!f.hidden]) {
-			assertTrue(visitedFiles.contains(file), '''[file should not exist] «file»''')
-		}
 	}
 	
 }
