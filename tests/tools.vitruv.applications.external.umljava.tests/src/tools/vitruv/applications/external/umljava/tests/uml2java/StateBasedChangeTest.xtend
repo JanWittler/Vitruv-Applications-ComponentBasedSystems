@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	static val RESOURCESPATH = "testresources"
-	static val INITIALMODELNAME = "Example"
+	static val INITIALMODELNAME = "Base"
 	static val MODELFILEEXTENSION ="uml"
 	
 	protected var Path testProjectFolder
