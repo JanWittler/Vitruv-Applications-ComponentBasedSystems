@@ -22,6 +22,7 @@
 		<module>tools.vitruv.applications.umlclassumlcomponents.tests</module>
 		<module>tools.vitruv.applications.umljava.tests</module>
 		<!--<module>commonalities</module>-->
+		<module>tools.vitruv.applications.external.umljava.tests</module>
 	</modules>
 	
 </project>
