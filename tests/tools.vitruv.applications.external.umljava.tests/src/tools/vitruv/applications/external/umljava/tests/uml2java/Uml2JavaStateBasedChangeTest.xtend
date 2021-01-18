@@ -24,11 +24,41 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	@Test
-	def testRename() {
-		testModels("Renamed")
+	def testAddClass() {
+		testModels("AddClass")
 	}
 	
-	def testModels(String directory) {
+	@Test
+	def testRemoveClass() {
+		testModels("RemoveClass")
+	}
+	
+	@Test
+	def testRenameClass() {
+		testModels("RenameClass")
+	}
+	
+	@Test
+	def testMoveClassEasy() {
+		testModels("MoveClassEasy")
+	}
+	
+	@Test
+	def testMoveClassHard() {
+		testModels("MoveClassHard")
+	}
+	
+	@Test
+	def testAddAttribute() {
+		testModels("AddAttribute")
+	}
+	
+	@Test
+	def testRemoveAttribute() {
+		testModels("RemoveAttribute")
+	}
+	
+	def void testModels(String directory) {
 		val changedModelPath = resourcesDirectory().resolve(directory).resolve("Model.uml")
 		resolveChangedState(changedModelPath)
 		
