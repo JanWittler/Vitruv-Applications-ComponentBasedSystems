@@ -12,7 +12,7 @@ public class Renamed {
 		this.name = name;
 	}
 	public boolean nameEquals(String otherName) {
-		return false;
+		
 	}
 }
 
