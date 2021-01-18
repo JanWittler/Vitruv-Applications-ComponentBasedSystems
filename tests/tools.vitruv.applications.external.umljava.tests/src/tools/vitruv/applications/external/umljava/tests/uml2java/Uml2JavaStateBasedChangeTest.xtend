@@ -20,6 +20,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	@BeforeEach
 	def extendTargetModel() {
 		enrichJavaModel()
+		assertTargetModelEquals(resourcesDirectory().resolve("expected_src"))
 	}
 	
 	@Test
