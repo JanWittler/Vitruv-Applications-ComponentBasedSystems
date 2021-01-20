@@ -1,4 +1,4 @@
-package tools.vitruv.external.applications.external.strategies
+package tools.vitruv.applications.external.strategies
 
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import org.eclipse.emf.ecore.resource.Resource

@@ -1,9 +1,9 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import tools.vitruv.applications.external.umljava.tests.uml2java.StateBasedChangeTest
-import tools.vitruv.external.applications.external.strategies.StateBasedChangeDiffProviderStorage
-import tools.vitruv.external.applications.external.strategies.DiffReplayingStateBasedChangeResolutionStrategy
-import tools.vitruv.external.applications.external.strategies.StateBasedChangeDiffProvider
+import tools.vitruv.applications.external.strategies.StateBasedChangeDiffProviderStorage
+import tools.vitruv.applications.external.strategies.DiffReplayingStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.strategies.StateBasedChangeDiffProvider
 import org.junit.jupiter.api.BeforeEach
 
 abstract class DiffProvidingStateBasedChangeTest extends StateBasedChangeTest {

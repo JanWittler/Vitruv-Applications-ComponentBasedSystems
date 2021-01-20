@@ -1,4 +1,4 @@
-package tools.vitruv.external.applications.external.strategies
+package tools.vitruv.applications.external.strategies
 
 import java.util.Collections
 import java.util.List

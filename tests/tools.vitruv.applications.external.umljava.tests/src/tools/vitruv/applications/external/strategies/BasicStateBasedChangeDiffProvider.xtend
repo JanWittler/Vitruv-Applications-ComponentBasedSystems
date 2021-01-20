@@ -1,4 +1,4 @@
-package tools.vitruv.external.applications.external.strategies
+package tools.vitruv.applications.external.strategies
 
 import org.eclipse.emf.common.notify.Notifier
 import org.eclipse.emf.compare.EMFCompare
