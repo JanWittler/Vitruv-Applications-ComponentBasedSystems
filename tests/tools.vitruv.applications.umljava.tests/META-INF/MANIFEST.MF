@@ -5,9 +5,13 @@ Bundle-SymbolicName: tools.vitruv.applications.umljava.tests
 Automatic-Module-Name: tools.vitruv.applications.umljava.tests
 Bundle-Version: 0.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Fragment-Host: tools.vitruv.applications.umljava
 Require-Bundle: org.junit.jupiter.api,
+ tools.vitruv.applications.umljava,
+ tools.vitruv.framework.applications,
  tools.vitruv.testutils,
+ tools.vitruv.extensions.dslsruntime.reactions,
  org.hamcrest.core,
- org.apache.commons.io
+ org.apache.commons.io,
+ edu.kit.ipd.sdq.activextendannotations
 Bundle-Vendor: vitruv.tools
+Export-Package: tools.vitruv.applications.umljava.tests.util

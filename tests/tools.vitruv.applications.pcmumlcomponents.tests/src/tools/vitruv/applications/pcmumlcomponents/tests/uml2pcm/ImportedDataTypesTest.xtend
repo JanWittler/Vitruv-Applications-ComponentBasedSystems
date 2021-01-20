@@ -18,25 +18,26 @@ import tools.vitruv.applications.pcmumlcomponents.uml2pcm.UmlToPcmTypesUtil
 import tools.vitruv.applications.pcmumlcomponents.uml2pcm.UmlToPcmUtil
 
 class ImportedDataTypesTest extends AbstractUmlPcmTest {
-	
+
 	protected val UMLTYPE_BOOL = "Boolean"
-	
+
 	/**
 	 * Cannot modify resource set without a write transaction
 	 */
-	//@Test
+	// @Test
 	def void importedTypesExistTest() {
 		val umlTypes = importPrimitiveTypes()
 		assertNotNull(umlTypes.getOwnedMember(UMLTYPE_BOOL))
 		val umlType = umlTypes.getOwnedMember(UMLTYPE_BOOL) as DataType
 		val pcmRepository = rootElement.claimCorrespondingRepository
-		saveAndSynchronizeChanges(rootElement)
-		val pcmType = UmlToPcmTypesUtil.retrieveCorrespondingPcmType(umlType, pcmRepository, false, null, correspondenceModel)
+		propagate
+		val pcmType = UmlToPcmTypesUtil.retrieveCorrespondingPcmType(umlType, pcmRepository, false, null,
+			correspondenceModel)
 		assertNotNull(pcmType)
 		assertTrue(pcmType instanceof PrimitiveDataType)
 		assertEquals(PrimitiveTypeEnum.BOOL, (pcmType as PrimitiveDataType).type)
 	}
-	
+
 	@Test
 	def void unmappedPrimitiveTypeTest() {
 		importPrimitiveTypes()
@@ -45,12 +46,13 @@ class ImportedDataTypesTest extends AbstractUmlPcmTest {
 		umlType.name = umlTypeName
 		userInteraction.addNextSingleSelection(PrimitiveTypeEnum.BYTE_VALUE)
 		rootElement.packagedElements += umlType
-		saveAndSynchronizeChanges(rootElement)
+		propagate
 		val pcmRepository = rootElement.claimCorrespondingRepository
-		val pcmType = UmlToPcmTypesUtil.retrieveCorrespondingPcmType(umlType, pcmRepository, false, null, correspondenceModel) as PrimitiveDataType
+		val pcmType = UmlToPcmTypesUtil.retrieveCorrespondingPcmType(umlType, pcmRepository, false, null,
+			correspondenceModel) as PrimitiveDataType
 		assertEquals(PrimitiveTypeEnum.BYTE, pcmType.type)
 	}
-	
+
 	@Test
 	def void mapToCompositeTypeTest() {
 		importPrimitiveTypes()
@@ -59,12 +61,12 @@ class ImportedDataTypesTest extends AbstractUmlPcmTest {
 		umlType.name = umlTypeName
 		userInteraction.addNextSingleSelection(PrimitiveTypeEnum.values.length)
 		rootElement.packagedElements += umlType
-		saveAndSynchronizeChanges(rootElement)
+		propagate
 		val pcmType = umlType.correspondingElements.head
 		assertTrue(pcmType instanceof CompositeDataType)
 		assertEquals(umlTypeName, (pcmType as CompositeDataType).entityName)
 	}
-	
+
 	@Test
 	def void useImportedTypeTest() {
 		val umlTypes = importPrimitiveTypes()
@@ -72,10 +74,11 @@ class ImportedDataTypesTest extends AbstractUmlPcmTest {
 		val umlInterface = UMLFactory.eINSTANCE.createInterface()
 		umlInterface.createOwnedOperation(OPERATION_NAME, new BasicEList<String>(), new BasicEList<Type>(), umlType)
 		rootElement.packagedElements += umlInterface
-		saveAndSynchronizeChanges(rootElement)
-		val pcmInterface = correspondenceModel.getCorrespondingEObjects(#[umlInterface]).flatten.head as OperationInterface
+		propagate
+		val pcmInterface = correspondenceModel.getCorrespondingEObjects(#[umlInterface]).flatten.
+			head as OperationInterface
 		assertEquals(UmlToPcmUtil.getPcmPrimitiveType(UMLTYPE_BOOL),
-					 (pcmInterface.signatures__OperationInterface.head.returnType__OperationSignature as PrimitiveDataType).type)
+			(pcmInterface.signatures__OperationInterface.head.returnType__OperationSignature as PrimitiveDataType).type)
 	}
-	
+
 }

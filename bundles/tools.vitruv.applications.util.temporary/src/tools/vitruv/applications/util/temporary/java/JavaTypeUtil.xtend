@@ -148,7 +148,7 @@ class JavaTypeUtil {
         return namespaceClassifierReference
     }
 
-    def static void setTypeReference(TypedElement typedElement, TypeReference typeRef) {
+    def static setTypeReference(TypedElement typedElement, TypeReference typeRef) {
         if (typeRef !== null) {
             typedElement.typeReference = typeRef
         } else {
@@ -188,7 +188,7 @@ class JavaTypeUtil {
         return null
     }
 
-    static def boolean hasSameTargetReference(TypeReference reference1, TypeReference reference2) {
+    def static boolean hasSameTargetReference(TypeReference reference1, TypeReference reference2) {
         if (reference1 == reference2 || reference1.equals(reference2)) {
             return true
         }
@@ -258,14 +258,12 @@ class JavaTypeUtil {
             addJavaImport(compUnit, jType)
             // add imports for typeArguments if any exist
             if (jTypeRef instanceof NamespaceClassifierReference) {
-                val typeArguments = (jTypeRef as NamespaceClassifierReference).classifierReferences.get(0).typeArguments
+                val typeArguments = jTypeRef.classifierReferences.get(0).typeArguments
                 for (typeArgument : typeArguments.filter(QualifiedTypeArgument).filter[it.typeReference !== null]) {
                     typeArgument.typeReference
                     addJavaImport(compUnit, typeArgument.typeReference)
                 }
             }
-        } else {
-            // shouldn't occur
         }
     }
 

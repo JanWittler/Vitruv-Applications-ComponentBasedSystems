@@ -1,7 +1,9 @@
 package tools.vitruv.applications.pcmumlclass.mapping
 
 import tools.vitruv.extensions.dslsruntime.mappings.updates.MappingUpdateTransformation
+import edu.kit.ipd.sdq.activextendannotations.Utility
 
+@Utility
 class MappingUpdateUtils {
 
 	static def chain(MappingUpdateTransformation t1, MappingUpdateTransformation t2) {
@@ -58,7 +60,7 @@ class MappingUpdateUtils {
 			override transformToInterchangeableValue() {
 				if (suffixInInterchangeableValue) {
 					[
-						val string = it as String;
+						val string = it as String
 						if (string.endsWith(DefaultLiterals.IMPLEMENTATION_SUFFIX)) {
 							it
 						} else {
@@ -67,10 +69,10 @@ class MappingUpdateUtils {
 					]
 				} else {
 					[
-						val string = it as String;
+						val string = it as String
 						if (string !== null && string.endsWith(DefaultLiterals.IMPLEMENTATION_SUFFIX)) {
 							string.substring(0, (it as String).length - DefaultLiterals.IMPLEMENTATION_SUFFIX.length)
-						} else{
+						} else {
 							string
 						}
 					]
@@ -87,10 +89,11 @@ class MappingUpdateUtils {
 				} else {
 					if (suffixInInterchangeableValue) {
 						[
-							val string = it as String;
+							val string = it as String
 							if (string !== null && string.endsWith(DefaultLiterals.IMPLEMENTATION_SUFFIX)) {
-								string.substring(0, (it as String).length - DefaultLiterals.IMPLEMENTATION_SUFFIX.length)
-							} else{
+								string.substring(0,
+									(it as String).length - DefaultLiterals.IMPLEMENTATION_SUFFIX.length)
+							} else {
 								string
 							}
 						]
