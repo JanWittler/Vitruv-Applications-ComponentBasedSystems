@@ -1,19 +1,21 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
+import java.io.File
 import java.nio.file.Path
+import java.util.HashMap
+import java.util.HashSet
+import java.util.Map
+import org.apache.commons.io.FileUtils
 import org.emftext.language.java.containers.CompilationUnit
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.framework.util.datatypes.VURI
-import java.io.File
-import java.util.HashSet
 
-import static org.junit.jupiter.api.Assertions.assertTrue
-import org.apache.commons.io.FileUtils
-import org.junit.jupiter.api.BeforeEach
+import static org.junit.jupiter.api.Assertions.assertEquals
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
 	
@@ -91,24 +93,57 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	def void assertDirectoriesEqual(File expected, File actual) {
-		var visitedFiles = new HashSet<File>()
+		val result = internalDirectoriesEqual(expected, actual)
+		val incorrectResults = result.filter[_, value | value != TargetModelComparisonResult.CORRECT]
+		assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
+	}
+	
+	private def Map<File, TargetModelComparisonResult> internalDirectoriesEqual(File expected, File actual) {
+		val visitedFiles = new HashSet<File>()
+		val result = new HashMap<File, TargetModelComparisonResult>()
 		for (File file: expected.listFiles().filter[f|!f.hidden]) {
 			val relativize = expected.toPath().relativize(file.toPath())
 			val fileInOther = actual.toPath().resolve(relativize).toFile()
 			visitedFiles += fileInOther
 			
-			assertTrue(fileInOther.exists, '''[missing file] «fileInOther»''')
-			assertTrue(file.isDirectory == fileInOther.isDirectory, '''[«fileInOther.isDirectory ? "dir instead of file" : "file instead of dir"»] «fileInOther»''')
-			
-			if (file.isDirectory) {
-				assertDirectoriesEqual(file, fileInOther)
+			if (!fileInOther.exists) {
+				result.put(fileInOther, TargetModelComparisonResult.MISSING_FILE)
+			}
+			else if (!(file.isDirectory == fileInOther.isDirectory)) {
+				if (fileInOther.isDirectory) {
+					result.put(fileInOther, TargetModelComparisonResult.DIR_INSTEAD_OF_FILE)
+				}
+				else {
+					result.put(fileInOther, TargetModelComparisonResult.FILE_INSTEAD_OF_DIR)
+				}
+			}
+			else if (file.isDirectory) {
+				val subResult = internalDirectoriesEqual(file, fileInOther)
+				subResult.forEach[key, value | result.put(key, value)]
 			}
 			else {
-				assertTrue(FileUtils.contentEquals(file, fileInOther), '''[incorrect file] «fileInOther»''')
+				if (FileUtils.contentEquals(file, fileInOther)) {
+					result.put(fileInOther, TargetModelComparisonResult.CORRECT)
+				}
+				else {
+					result.put(fileInOther, TargetModelComparisonResult.INCORRECT_FILE)
+				}
 			}
 		}
 		for (File file: actual.listFiles().filter[f|!f.hidden]) {
-			assertTrue(visitedFiles.contains(file), '''[file should not exist] «file»''')
+			if (!visitedFiles.contains(file)) {
+				result.put(file, TargetModelComparisonResult.FILE_SHOULD_NOT_EXIST)
+			}
 		}
+		return result
+	}
+	
+	private enum TargetModelComparisonResult {
+		CORRECT,
+		MISSING_FILE,
+		DIR_INSTEAD_OF_FILE,
+		FILE_INSTEAD_OF_DIR,
+		INCORRECT_FILE,
+		FILE_SHOULD_NOT_EXIST
 	}
 }

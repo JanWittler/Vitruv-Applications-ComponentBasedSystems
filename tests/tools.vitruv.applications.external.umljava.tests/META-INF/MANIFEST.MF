@@ -9,5 +9,6 @@ Fragment-Host: tools.vitruv.applications.umljava
 Require-Bundle: org.junit.jupiter.api,
  tools.vitruv.testutils,
  org.apache.commons.io,
- org.eclipse.emf.compare;bundle-version="3.5.3"
+ org.eclipse.emf.compare;bundle-version="3.5.3",
+ org.eclipse.emf.compare.rcp;bundle-version="2.5.2"
 Bundle-Vendor: vitruv.tools
