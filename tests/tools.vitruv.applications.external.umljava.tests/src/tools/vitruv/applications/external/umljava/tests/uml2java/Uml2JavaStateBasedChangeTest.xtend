@@ -67,8 +67,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	def enrichJavaModel() {
-		val javaResource = resourceAt(testProjectFolder.resolve("src/com.example.first/Example.java"))
-		javaResource.startRecordingChanges => [
+		resourceAt(testProjectFolder.resolve("src/com.example.first/Example.java")).record [
 			val jCompilationUnit = contents.head as CompilationUnit
 			val jClass = jCompilationUnit.classifiers.head
 			val jClassMethod = jClass.members.get(3) as ClassMethod
@@ -80,7 +79,6 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 			jClassMethod.statements.add(jStatement)
 		]
 		propagate
-		javaResource.stopRecordingChanges
 	}
 	
 	def assertTargetModelEquals(Path expected) {

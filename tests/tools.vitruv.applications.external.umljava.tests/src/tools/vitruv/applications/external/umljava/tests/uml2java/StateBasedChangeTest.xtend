@@ -48,38 +48,36 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	def getDerivedChangeSequence() {
-		return stateBasedStrategyLogger.getChangeSequence()
+		stateBasedStrategyLogger.getChangeSequence()
 	}
 	
 	def getModelsDirectory() {
-		return testProjectFolder.resolve("model")
+		testProjectFolder.resolve("model")
 	}
 	
 	def resourcesDirectory() {
-		return Path.of(RESOURCESPATH)
+		Path.of(RESOURCESPATH)
 	}
 	
-	def getSourceModelVuri() {
-		val modelPath = modelsDirectory.resolve("Model." + MODELFILEEXTENSION)
-		return VURI.getInstance(modelPath.toString)
+	def getSourceModelPath() {
+		modelsDirectory.resolve("Model." + MODELFILEEXTENSION)
 	}
 	
 	def resolveChangedState(Path changedModelPath) {
 		val changedModel = loadModel(changedModelPath)
-		propagatedChanges = virtualModel.propagateChangedState(changedModel, getSourceModelVuri().EMFUri)
+		val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
+		propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
 	}
 	
 	private def preloadModel(Path path) {
 		val originalModel = loadModel(path)
-		val sourceResource =  resourceAt(modelsDirectory.resolve("Model." + MODELFILEEXTENSION))
-		sourceResource.startRecordingChanges => [
+		resourceAt(sourceModelPath).record [
 			contents += EcoreUtil.copy(originalModel.contents.head)
 		]
 		propagate
-		sourceResource.stopRecordingChanges
 		
 		//preserve original ids
-		val model = virtualModel.getModelInstance(sourceModelVuri).resource
+		val model = virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString)).resource
 		ResourceUtil.copyIDs(originalModel, model)
 		model.save(emptyMap)
 	}
