@@ -12,8 +12,6 @@ import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
-import tools.vitruv.framework.util.datatypes.VURI
 
 import static org.junit.jupiter.api.Assertions.assertEquals
 
@@ -69,22 +67,20 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	def enrichJavaModel() {
-		val jVURI = VURI.getInstance(testProjectFolder.resolve("src/com.example.first/Example.java").toString())
-		val jModelInstance = virtualModel.getModelInstance(jVURI)
-		val jResource = ResourceUtil.copy(jModelInstance.resource)
-		val jCompilationUnit = jResource.contents.head as CompilationUnit
-		val jClass = jCompilationUnit.classifiers.head
-		val jClassMethod = jClass.members.get(3) as ClassMethod
-		startRecordingChanges(jClass)
-		
-		val jStatement = StatementsFactory.eINSTANCE.createReturn()
-		val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
-		jBool.value = false
-		jStatement.returnValue = jBool
-		jClassMethod.statements.add(jStatement)
-		        
-		saveAndSynchronizeChanges(jClass)
-		stopRecordingChanges(jClass)
+		val javaResource = resourceAt(testProjectFolder.resolve("src/com.example.first/Example.java"))
+		javaResource.startRecordingChanges => [
+			val jCompilationUnit = contents.head as CompilationUnit
+			val jClass = jCompilationUnit.classifiers.head
+			val jClassMethod = jClass.members.get(3) as ClassMethod
+			
+			val jStatement = StatementsFactory.eINSTANCE.createReturn()
+			val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
+			jBool.value = false
+			jStatement.returnValue = jBool
+			jClassMethod.statements.add(jStatement)
+		]
+		propagate
+		javaResource.stopRecordingChanges
 	}
 	
 	def assertTargetModelEquals(Path expected) {

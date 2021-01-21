@@ -4,13 +4,11 @@ import java.nio.file.Path
 import java.util.List
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.^extension.ExtendWith
-import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
-import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
@@ -18,6 +16,8 @@ import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
+import org.eclipse.emf.ecore.util.EcoreUtil
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -71,7 +71,12 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	
 	private def preloadModel(Path path) {
 		val originalModel = loadModel(path)
-		createAndSynchronizeModel(sourceModelVuri.toResolvedAbsolutePath, EcoreUtil.copy(originalModel.contents.head))
+		val sourceResource =  resourceAt(modelsDirectory.resolve("Model." + MODELFILEEXTENSION))
+		sourceResource.startRecordingChanges => [
+			contents += EcoreUtil.copy(originalModel.contents.head)
+		]
+		propagate
+		sourceResource.stopRecordingChanges
 		
 		//preserve original ids
 		val model = virtualModel.getModelInstance(sourceModelVuri).resource
@@ -90,5 +95,4 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		println('''vitruvius changes:
 	«getDerivedChangeSequence()»''')
 	}
-	
 }
