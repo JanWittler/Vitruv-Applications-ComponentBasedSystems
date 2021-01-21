@@ -4,7 +4,6 @@ import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.emf.ecore.xmi.XMLResource
-import org.eclipse.emf.ecore.EObject
 
 /**
  * @author Jan Wittler
@@ -12,9 +11,9 @@ import org.eclipse.emf.ecore.EObject
 class ResourceUtil {
 	/**
 	 * Copies the given resource. 
-	 * In contrast to {@link org.eclipse.emf.ecore.util.EcoreUtil#copyAll EcoreUtil.copyAll} this method also copies the elements' IDs if there are any.
+	 * In contrast to {@link EcoreUtil#copyAll EcoreUtil.copyAll} this method also copies the elements' IDs if there are any.
 	 * @param resource The resource to copy.
-	 * @return Returns a new {@link org.eclipse.emf.ecore.resource.Resource Resource} with the contents of the provided resource.
+	 * @return Returns a new {@link Resource} with the contents of the provided resource.
 	 */
 	static def copy(Resource resource) {
 		val resourceSet = new ResourceSetImpl
