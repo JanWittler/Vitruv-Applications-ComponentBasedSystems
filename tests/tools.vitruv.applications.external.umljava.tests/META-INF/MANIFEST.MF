@@ -1,14 +1,18 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Vitruv External UML-Java Tests
-Bundle-SymbolicName: tools.vitruv.external.applications.umljava.tests
-Automatic-Module-Name: tools.vitruv.external.applications.umljava.tests
+Bundle-SymbolicName: tools.vitruv.applications.external.umljava.tests
+Automatic-Module-Name: tools.vitruv.applications.external.umljava.tests
 Bundle-Version: 0.2.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Fragment-Host: tools.vitruv.applications.umljava
 Require-Bundle: org.junit.jupiter.api,
+ tools.vitruv.applications.umljava,
+ tools.vitruv.framework.applications,
  tools.vitruv.testutils,
+ tools.vitruv.extensions.dslsruntime.reactions,
+ org.hamcrest.core,
  org.apache.commons.io,
+ edu.kit.ipd.sdq.activextendannotations,
  org.eclipse.emf.compare;bundle-version="3.5.3",
  org.eclipse.emf.compare.rcp;bundle-version="2.5.2"
 Bundle-Vendor: vitruv.tools
