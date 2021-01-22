@@ -1,13 +1,12 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileReader
 import java.io.InputStreamReader
 import java.nio.file.Path
-import java.util.HashMap
-import java.util.HashSet
-import java.util.Map
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import org.custommonkey.xmlunit.Difference
 import org.custommonkey.xmlunit.DifferenceConstants
 import org.custommonkey.xmlunit.DifferenceListener
@@ -22,17 +21,12 @@ import org.w3c.dom.Node
 import org.xml.sax.InputSource
 
 import static org.custommonkey.xmlunit.XMLUnit.*
-import static org.junit.jupiter.api.Assertions.assertEquals
-import static org.junit.jupiter.api.Assertions.assertTrue
-import java.io.BufferedReader
-import java.io.FileReader
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
 	
 	@BeforeEach
 	def extendTargetModel() {
 		enrichJavaModel()
-		assertSourceModelEquals(resourcesDirectory.resolve(INITIALMODELNAME + "." + MODELFILEEXTENSION))
 		assertTargetModelEquals(resourcesDirectory().resolve("expected_src"))
 	}
 	
@@ -74,7 +68,6 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	def void testModels(String directory) {
 		val changedModelPath = resourcesDirectory().resolve(directory).resolve("Model.uml")
 		resolveChangedState(changedModelPath)
-		assertSourceModelEquals(changedModelPath)
 		
 		val expectedTargetModel = resourcesDirectory().resolve(directory).resolve("expected_src")
 		assertTargetModelEquals(expectedTargetModel)
@@ -95,17 +88,74 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		propagate
 	}
 	
-	def assertSourceModelEquals(Path expected) {
-		val expectedStream = new FileInputStream(expected.toFile)
+	def assertTargetModelEquals(Path expected) {
+		val targetModelFolder = testProjectFolder.resolve("src")
+		assertFileOrDirectoryEquals(expected.toFile, targetModelFolder.toFile)
+	}
+	
+	override compareFiles(File expected, File actual) {
+		val result = super.compareFiles(expected, actual)
+		if (result == FileComparisonResult.CORRECT) {
+			return result
+		}
+		val e1 = FilenameUtils.getExtension(expected.toString)
+		val e2 = FilenameUtils.getExtension(actual.toString)
+		if (e1 == e2) {
+			if (e1 == "java") {
+				return compareJavaFiles(expected, actual)
+			}
+			else if (e1 == "uml") {
+				return compareUMLFiles(expected, actual)
+			}
+		}
+		return result
+	}
+	
+	/**
+	 * Compares two java files.
+	 * The comparison compares each line of the files for equality, leading or trailing whitespaces are ignored.
+	 * Empty lines are ignored.
+	 * Lines starting with an import statement are ignored as imports are currently not cleaned up by the consistency mechanism.
+	 */
+	private def compareJavaFiles(File expected, File actual) {
+		val readerExpected = new BufferedReader(new FileReader(expected))
+		val readerActual = new BufferedReader(new FileReader(actual))
+		
+		var lineExpected = readerExpected.readLineTrimmed
+		var lineActual = readerActual.readLineTrimmed
+		while (lineExpected !== null || lineActual !== null) {
+			if (lineExpected !== null && (lineExpected.startsWith("import") || lineExpected.empty)) {
+				lineExpected = readerExpected.readLineTrimmed
+			}
+			else if (lineActual !== null && (lineActual.startsWith("import") || lineActual.empty)) {
+				lineActual = readerActual.readLineTrimmed
+			}
+			else {
+				if (lineExpected != lineActual) {
+					return FileComparisonResult.INCORRECT_FILE
+				}
+				lineExpected = readerExpected.readLineTrimmed
+				lineActual = readerActual.readLineTrimmed
+			}
+		}
+		return FileComparisonResult.CORRECT
+	}
+	
+	private def readLineTrimmed(BufferedReader reader) {
+		reader.readLine?.trim
+	}
+	
+	private def compareUMLFiles(File expected, File actual) {
+		val expectedStream = new FileInputStream(expected)
 		val expectedSource = new InputSource(new InputStreamReader(expectedStream))
-		val actualStream = new FileInputStream(sourceModelPath.toFile)
+		val actualStream = new FileInputStream(actual)
 		val actualSource = new InputSource(new InputStreamReader(actualStream))
 		
 		XMLUnit.ignoreWhitespace = true
 		XMLUnit.ignoreAttributeOrder = true
 		val diff = XMLUnit.compareXML(expectedSource, actualSource)
 		diff.overrideDifferenceListener(new UMLDefaultValuesDifferenceListener)
-		assertTrue(diff.similar, '''invalid xml model; diff: «diff»''')
+		return diff.similar ? FileComparisonResult.CORRECT : FileComparisonResult.INCORRECT_FILE
 	}
 	
 	static class UMLDefaultValuesDifferenceListener implements DifferenceListener {
@@ -140,92 +190,5 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		override skippedComparison(Node control, Node test) {
 			
 		}
-	}
-	
-	def assertTargetModelEquals(Path expected) {
-		val targetModelFolder = testProjectFolder.resolve("src")
-		assertDirectoriesEqual(expected.toFile(), targetModelFolder.toFile())
-	}
-	
-	def void assertDirectoriesEqual(File expected, File actual) {
-		val result = internalDirectoriesEqual(expected, actual)
-		val incorrectResults = result.filter[_, value | value != FileComparisonResult.CORRECT]
-		assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
-	}
-	
-	private def Map<File, Uml2JavaStateBasedChangeTest.FileComparisonResult> internalDirectoriesEqual(File expected, File actual) {
-		val visitedFiles = new HashSet<File>()
-		val result = new HashMap<File, Uml2JavaStateBasedChangeTest.FileComparisonResult>()
-		for (File file: expected.listFiles().filter[f|!f.hidden]) {
-			val relativize = expected.toPath().relativize(file.toPath())
-			val fileInOther = actual.toPath().resolve(relativize).toFile()
-			visitedFiles += fileInOther
-			
-			if (!fileInOther.exists) {
-				result.put(fileInOther, FileComparisonResult.MISSING_FILE)
-			}
-			else if (!(file.isDirectory == fileInOther.isDirectory)) {
-				if (fileInOther.isDirectory) {
-					result.put(fileInOther, FileComparisonResult.DIR_INSTEAD_OF_FILE)
-				}
-				else {
-					result.put(fileInOther, FileComparisonResult.FILE_INSTEAD_OF_DIR)
-				}
-			}
-			else if (file.isDirectory) {
-				val subResult = internalDirectoriesEqual(file, fileInOther)
-				subResult.forEach[key, value | result.put(key, value)]
-			}
-			else {
-				result.put(fileInOther, compareFiles(file, fileInOther))
-			}
-		}
-		for (File file: actual.listFiles().filter[f|!f.hidden]) {
-			if (!visitedFiles.contains(file)) {
-				result.put(file, FileComparisonResult.FILE_SHOULD_NOT_EXIST)
-			}
-		}
-		return result
-	}
-	
-	private enum FileComparisonResult {
-		CORRECT,
-		MISSING_FILE,
-		DIR_INSTEAD_OF_FILE,
-		FILE_INSTEAD_OF_DIR,
-		INCORRECT_FILE,
-		FILE_SHOULD_NOT_EXIST
-	}
-	
-	def FileComparisonResult compareFiles(File expected, File actual) {
-		if (FileUtils.contentEquals(expected, actual)) {
-			return FileComparisonResult.CORRECT
-		}
-		val readerExpected = new BufferedReader(new FileReader(expected))
-		val readerActual = new BufferedReader(new FileReader(actual))
-		
-		var lineExpected = readerExpected.readLineTrimmed
-		var lineActual = readerActual.readLineTrimmed
-		while (lineExpected !== null || lineActual !== null) {
-			//ignore imports as they are currently not cleaned up by the consistency mechanism
-			if (lineExpected !== null && (lineExpected.startsWith("import") || lineExpected.empty)) {
-				lineExpected = readerExpected.readLineTrimmed
-			}
-			else if (lineActual !== null && (lineActual.startsWith("import") || lineActual.empty)) {
-				lineActual = readerActual.readLineTrimmed
-			}
-			else {
-				if (lineExpected != lineActual) {
-					return FileComparisonResult.INCORRECT_FILE
-				}
-				lineExpected = readerExpected.readLineTrimmed
-				lineActual = readerActual.readLineTrimmed
-			}
-		}
-		return FileComparisonResult.CORRECT
-	}
-	
-	private def readLineTrimmed(BufferedReader reader) {
-		reader.readLine?.trim
 	}
 }
