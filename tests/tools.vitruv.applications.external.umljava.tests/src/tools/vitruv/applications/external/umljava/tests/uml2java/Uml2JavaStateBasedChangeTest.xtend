@@ -1,25 +1,36 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.io.File
+import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.nio.file.Path
 import java.util.HashMap
 import java.util.HashSet
 import java.util.Map
 import org.apache.commons.io.FileUtils
+import org.custommonkey.xmlunit.Difference
+import org.custommonkey.xmlunit.DifferenceConstants
+import org.custommonkey.xmlunit.DifferenceListener
+import org.custommonkey.xmlunit.XMLUnit
 import org.emftext.language.java.containers.CompilationUnit
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.w3c.dom.Node
+import org.xml.sax.InputSource
 
+import static org.custommonkey.xmlunit.XMLUnit.*
 import static org.junit.jupiter.api.Assertions.assertEquals
+import static org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
 	
 	@BeforeEach
 	def extendTargetModel() {
 		enrichJavaModel()
+		assertSourceModelEquals(resourcesDirectory.resolve(INITIALMODELNAME + "." + MODELFILEEXTENSION))
 		assertTargetModelEquals(resourcesDirectory().resolve("expected_src"))
 	}
 	
@@ -61,6 +72,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	def void testModels(String directory) {
 		val changedModelPath = resourcesDirectory().resolve(directory).resolve("Model.uml")
 		resolveChangedState(changedModelPath)
+		assertSourceModelEquals(changedModelPath)
 		
 		val expectedTargetModel = resourcesDirectory().resolve(directory).resolve("expected_src")
 		assertTargetModelEquals(expectedTargetModel)
@@ -79,6 +91,53 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 			jClassMethod.statements.add(jStatement)
 		]
 		propagate
+	}
+	
+	def assertSourceModelEquals(Path expected) {
+		val expectedStream = new FileInputStream(expected.toFile)
+		val expectedSource = new InputSource(new InputStreamReader(expectedStream))
+		val actualStream = new FileInputStream(sourceModelPath.toFile)
+		val actualSource = new InputSource(new InputStreamReader(actualStream))
+		
+		XMLUnit.ignoreWhitespace = true
+		XMLUnit.ignoreAttributeOrder = true
+		val diff = XMLUnit.compareXML(expectedSource, actualSource)
+		diff.overrideDifferenceListener(new UMLDefaultValuesDifferenceListener)
+		assertTrue(diff.similar, '''invalid xml model; diff: «diff»''')
+	}
+	
+	static class UMLDefaultValuesDifferenceListener implements DifferenceListener {
+		override differenceFound(Difference difference) {
+			if (difference.id === DifferenceConstants.ELEMENT_NUM_ATTRIBUTES_ID) {
+				// triggers detailed comparison of missing attributes
+				return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
+			}
+			else if (difference.id === DifferenceConstants.ATTR_NAME_NOT_FOUND_ID) {
+				if (difference.controlNodeDetail.value == "type") {
+					val type = difference.controlNodeDetail.node.attributes.getNamedItem("xmi:type").nodeValue
+					val nodeType = difference.controlNodeDetail.node.nodeName
+					if ((type == "uml:PackageImport" && nodeType == "packageImport") ||
+						(type == "uml:Property" && nodeType == "ownedAttribute") ||
+						(type == "uml:Operation" && nodeType == "ownedOperation") ||
+						(type == "uml:Parameter" && nodeType == "ownedParameter")
+					)
+					return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
+				}
+				else if (difference.controlNodeDetail.value == "visibility") {
+					val controlAttributes = difference.controlNodeDetail.node.attributes
+					val visibility = controlAttributes.getNamedItem("visibility").nodeValue
+					val type = controlAttributes.getNamedItem("xmi:type").nodeValue
+					if (visibility == "public" && type == "uml:Class") {
+						return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
+					}
+				}
+			}
+			return DifferenceListener.RETURN_ACCEPT_DIFFERENCE
+		}
+		
+		override skippedComparison(Node control, Node test) {
+			
+		}
 	}
 	
 	def assertTargetModelEquals(Path expected) {

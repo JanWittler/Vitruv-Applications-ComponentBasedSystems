@@ -4,11 +4,13 @@ import java.nio.file.Path
 import java.util.List
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
@@ -16,14 +18,12 @@ import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
-import org.eclipse.emf.ecore.util.EcoreUtil
-import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-	static val RESOURCESPATH = "testresources"
-	static val INITIALMODELNAME = "Base"
-	static val MODELFILEEXTENSION ="uml"
+	public static val RESOURCESPATH = "testresources"
+	public static val INITIALMODELNAME = "Base"
+	public static val MODELFILEEXTENSION ="uml"
 	
 	protected var Path testProjectFolder
 	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
