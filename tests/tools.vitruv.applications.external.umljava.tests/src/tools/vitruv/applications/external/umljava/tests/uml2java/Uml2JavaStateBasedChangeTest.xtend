@@ -11,12 +11,7 @@ import org.custommonkey.xmlunit.Difference
 import org.custommonkey.xmlunit.DifferenceConstants
 import org.custommonkey.xmlunit.DifferenceListener
 import org.custommonkey.xmlunit.XMLUnit
-import org.emftext.language.java.containers.CompilationUnit
-import org.emftext.language.java.literals.LiteralsFactory
-import org.emftext.language.java.members.ClassMethod
-import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
 
@@ -30,40 +25,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		assertTargetModelEquals(resourcesDirectory().resolve("expected_src"))
 	}
 	
-	@Test
-	def testAddClass() {
-		testModels("AddClass")
-	}
-	
-	@Test
-	def testRemoveClass() {
-		testModels("RemoveClass")
-	}
-	
-	@Test
-	def testRenameClass() {
-		testModels("RenameClass")
-	}
-	
-	@Test
-	def testMoveClassEasy() {
-		testModels("MoveClassEasy")
-	}
-	
-	@Test
-	def testMoveClassHard() {
-		testModels("MoveClassHard")
-	}
-	
-	@Test
-	def testAddAttribute() {
-		testModels("AddAttribute")
-	}
-	
-	@Test
-	def testRemoveAttribute() {
-		testModels("RemoveAttribute")
-	}
+	def void enrichJavaModel()
 	
 	def void testModels(String directory) {
 		val changedModelPath = resourcesDirectory().resolve(directory).resolve("Model.uml")
@@ -71,21 +33,6 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		
 		val expectedTargetModel = resourcesDirectory().resolve(directory).resolve("expected_src")
 		assertTargetModelEquals(expectedTargetModel)
-	}
-	
-	def enrichJavaModel() {
-		resourceAt(testProjectFolder.resolve("src/com.example.first/Example.java")).record [
-			val jCompilationUnit = contents.head as CompilationUnit
-			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.get(3) as ClassMethod
-			
-			val jStatement = StatementsFactory.eINSTANCE.createReturn()
-			val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
-			jBool.value = false
-			jStatement.returnValue = jBool
-			jClassMethod.statements.add(jStatement)
-		]
-		propagate
 	}
 	
 	def assertTargetModelEquals(Path expected) {
@@ -117,7 +64,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	 * Empty lines are ignored.
 	 * Lines starting with an import statement are ignored as imports are currently not cleaned up by the consistency mechanism.
 	 */
-	private def compareJavaFiles(File expected, File actual) {
+	def compareJavaFiles(File expected, File actual) {
 		val readerExpected = new BufferedReader(new FileReader(expected))
 		val readerActual = new BufferedReader(new FileReader(actual))
 		
@@ -145,7 +92,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		reader.readLine?.trim
 	}
 	
-	private def compareUMLFiles(File expected, File actual) {
+	def compareUMLFiles(File expected, File actual) {
 		val expectedStream = new FileInputStream(expected)
 		val expectedSource = new InputSource(new InputStreamReader(expectedStream))
 		val actualStream = new FileInputStream(actual)
