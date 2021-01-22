@@ -24,6 +24,8 @@ import org.xml.sax.InputSource
 import static org.custommonkey.xmlunit.XMLUnit.*
 import static org.junit.jupiter.api.Assertions.assertEquals
 import static org.junit.jupiter.api.Assertions.assertTrue
+import java.io.BufferedReader
+import java.io.FileReader
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
 	
@@ -147,27 +149,27 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	
 	def void assertDirectoriesEqual(File expected, File actual) {
 		val result = internalDirectoriesEqual(expected, actual)
-		val incorrectResults = result.filter[_, value | value != TargetModelComparisonResult.CORRECT]
+		val incorrectResults = result.filter[_, value | value != FileComparisonResult.CORRECT]
 		assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
 	}
 	
-	private def Map<File, TargetModelComparisonResult> internalDirectoriesEqual(File expected, File actual) {
+	private def Map<File, Uml2JavaStateBasedChangeTest.FileComparisonResult> internalDirectoriesEqual(File expected, File actual) {
 		val visitedFiles = new HashSet<File>()
-		val result = new HashMap<File, TargetModelComparisonResult>()
+		val result = new HashMap<File, Uml2JavaStateBasedChangeTest.FileComparisonResult>()
 		for (File file: expected.listFiles().filter[f|!f.hidden]) {
 			val relativize = expected.toPath().relativize(file.toPath())
 			val fileInOther = actual.toPath().resolve(relativize).toFile()
 			visitedFiles += fileInOther
 			
 			if (!fileInOther.exists) {
-				result.put(fileInOther, TargetModelComparisonResult.MISSING_FILE)
+				result.put(fileInOther, FileComparisonResult.MISSING_FILE)
 			}
 			else if (!(file.isDirectory == fileInOther.isDirectory)) {
 				if (fileInOther.isDirectory) {
-					result.put(fileInOther, TargetModelComparisonResult.DIR_INSTEAD_OF_FILE)
+					result.put(fileInOther, FileComparisonResult.DIR_INSTEAD_OF_FILE)
 				}
 				else {
-					result.put(fileInOther, TargetModelComparisonResult.FILE_INSTEAD_OF_DIR)
+					result.put(fileInOther, FileComparisonResult.FILE_INSTEAD_OF_DIR)
 				}
 			}
 			else if (file.isDirectory) {
@@ -175,28 +177,55 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 				subResult.forEach[key, value | result.put(key, value)]
 			}
 			else {
-				if (FileUtils.contentEquals(file, fileInOther)) {
-					result.put(fileInOther, TargetModelComparisonResult.CORRECT)
-				}
-				else {
-					result.put(fileInOther, TargetModelComparisonResult.INCORRECT_FILE)
-				}
+				result.put(fileInOther, compareFiles(file, fileInOther))
 			}
 		}
 		for (File file: actual.listFiles().filter[f|!f.hidden]) {
 			if (!visitedFiles.contains(file)) {
-				result.put(file, TargetModelComparisonResult.FILE_SHOULD_NOT_EXIST)
+				result.put(file, FileComparisonResult.FILE_SHOULD_NOT_EXIST)
 			}
 		}
 		return result
 	}
 	
-	private enum TargetModelComparisonResult {
+	private enum FileComparisonResult {
 		CORRECT,
 		MISSING_FILE,
 		DIR_INSTEAD_OF_FILE,
 		FILE_INSTEAD_OF_DIR,
 		INCORRECT_FILE,
 		FILE_SHOULD_NOT_EXIST
+	}
+	
+	def FileComparisonResult compareFiles(File expected, File actual) {
+		if (FileUtils.contentEquals(expected, actual)) {
+			return FileComparisonResult.CORRECT
+		}
+		val readerExpected = new BufferedReader(new FileReader(expected))
+		val readerActual = new BufferedReader(new FileReader(actual))
+		
+		var lineExpected = readerExpected.readLineTrimmed
+		var lineActual = readerActual.readLineTrimmed
+		while (lineExpected !== null || lineActual !== null) {
+			//ignore imports as they are currently not cleaned up by the consistency mechanism
+			if (lineExpected !== null && (lineExpected.startsWith("import") || lineExpected.empty)) {
+				lineExpected = readerExpected.readLineTrimmed
+			}
+			else if (lineActual !== null && (lineActual.startsWith("import") || lineActual.empty)) {
+				lineActual = readerActual.readLineTrimmed
+			}
+			else {
+				if (lineExpected != lineActual) {
+					return FileComparisonResult.INCORRECT_FILE
+				}
+				lineExpected = readerExpected.readLineTrimmed
+				lineActual = readerActual.readLineTrimmed
+			}
+		}
+		return FileComparisonResult.CORRECT
+	}
+	
+	private def readLineTrimmed(BufferedReader reader) {
+		reader.readLine?.trim
 	}
 }
