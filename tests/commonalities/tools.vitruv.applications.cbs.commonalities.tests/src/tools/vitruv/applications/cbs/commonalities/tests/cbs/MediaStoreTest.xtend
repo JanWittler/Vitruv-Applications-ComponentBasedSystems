@@ -1,9 +1,6 @@
 package tools.vitruv.applications.cbs.commonalities.tests.cbs
 
 import java.util.List
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 import tools.vitruv.applications.cbs.commonalities.tests.CBSCommonalitiesExecutionTest
 import tools.vitruv.applications.cbs.commonalities.tests.cbs.pcm.PcmMediaStoreTestModels
 import tools.vitruv.applications.cbs.commonalities.tests.cbs.uml.UmlMediaStoreTestModels_1_Packages
@@ -13,13 +10,12 @@ import tools.vitruv.applications.cbs.commonalities.tests.cbs.uml.UmlMediaStoreTe
 import tools.vitruv.applications.cbs.commonalities.tests.util.DomainModel
 import tools.vitruv.applications.cbs.commonalities.tests.util.DomainModelsProvider
 import tools.vitruv.applications.cbs.commonalities.tests.util.pcm.PcmTestModelsProvider
-import tools.vitruv.applications.cbs.commonalities.tests.util.runner.XtextParametersRunnerFactory
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import tools.vitruv.applications.cbs.commonalities.tests.cbs.uml.UmlMediaStoreTestModels_5_ProvidedRoles
 
-@RunWith(Parameterized)
-@Parameterized.UseParametersRunnerFactory(XtextParametersRunnerFactory)
 class MediaStoreTest extends CBSCommonalitiesExecutionTest {
 
-	@Parameterized.Parameters(name='{0} to {1}')
 	static def List<Object[]> testParameters() {
 		val pcmModels = new PcmTestModelsProvider [new PcmMediaStoreTestModels(it)]
 		val umlModels1 = new DomainModelsProvider('UML (1_Packages)') [
@@ -34,11 +30,15 @@ class MediaStoreTest extends CBSCommonalitiesExecutionTest {
 		val umlModels4 = new DomainModelsProvider('UML (4_OperationSignatures)') [
 			new UmlMediaStoreTestModels_4_OperationSignatures(it)
 		]
+		val umlModels5 = new DomainModelsProvider('UML (5_ProvidedRoles)') [
+			new UmlMediaStoreTestModels_5_ProvidedRoles(it)
+		]
 		return #[
 			#[pcmModels, umlModels1],
 			#[pcmModels, umlModels2],
 			#[pcmModels, umlModels3],
-			#[pcmModels, umlModels4]
+			#[pcmModels, umlModels4],
+			#[pcmModels, umlModels5]
 		]
 	}
 
@@ -47,18 +47,11 @@ class MediaStoreTest extends CBSCommonalitiesExecutionTest {
 		def DomainModel mediaStoreCreation()
 	}
 
-	val DomainModels sourceModels
-	val DomainModels targetModels
-
-	new(DomainModelsProvider<DomainModels> sourceModelsProvider,
+	@ParameterizedTest(name='{0} to {1}')
+	@MethodSource("testParameters")
+	def void mediaStoreCreation(DomainModelsProvider<DomainModels> sourceModelsProvider,
 		DomainModelsProvider<DomainModels> targetModelsProvider) {
-		this.sourceModels = sourceModelsProvider.getModels(vitruvApplicationTestAdapter)
-		this.targetModels = targetModelsProvider.getModels(vitruvApplicationTestAdapter)
-	}
-
-	@Test
-	def void mediaStoreCreation() {
-		sourceModels.mediaStoreCreation.createAndSynchronize()
-		targetModels.mediaStoreCreation.check()
+		sourceModelsProvider.getModels.mediaStoreCreation.createAndSynchronize()
+		targetModelsProvider.getModels.mediaStoreCreation.check()
 	}
 }

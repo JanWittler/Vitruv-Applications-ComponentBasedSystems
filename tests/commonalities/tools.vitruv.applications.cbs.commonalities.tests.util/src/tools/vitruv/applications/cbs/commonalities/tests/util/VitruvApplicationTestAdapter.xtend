@@ -2,7 +2,6 @@ package tools.vitruv.applications.cbs.commonalities.tests.util
 
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.Resource
-import tools.vitruv.testutils.VitruvApplicationTest
 
 /**
  * Interface to internals of {@link VitruvApplicationTest} for testing
@@ -16,7 +15,4 @@ interface VitruvApplicationTestAdapter {
 
 	def void createAndSynchronizeModel(String modelPathInProject, EObject rootElement)
 
-	def void saveAndSynchronizeChanges(Resource resource)
-
-	def void deleteAndSynchronizeModel(String modelPathInProject)
 }
