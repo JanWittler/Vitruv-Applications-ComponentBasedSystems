@@ -14,6 +14,7 @@ import org.custommonkey.xmlunit.XMLUnit
 import org.junit.jupiter.api.BeforeEach
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
+import tools.vitruv.domains.java.util.JavaPersistenceHelper
 
 import static org.custommonkey.xmlunit.XMLUnit.*
 
@@ -36,7 +37,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	def assertTargetModelEquals(Path expected) {
-		val targetModelFolder = testProjectFolder.resolve("src")
+		val targetModelFolder = testProjectFolder.resolve(JavaPersistenceHelper.javaProjectSrc)
 		assertFileOrDirectoryEquals(expected.toFile, targetModelFolder.toFile)
 	}
 	

@@ -116,7 +116,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
 	}
 	
-	private def Map<File, Uml2JavaStateBasedChangeTest.FileComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
+	private def Map<File, FileComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
 		val result = new HashMap<File, Uml2JavaStateBasedChangeTest.FileComparisonResult>()
 		if (!actual.exists) {
 			result.put(actual, FileComparisonResult.MISSING_FILE)

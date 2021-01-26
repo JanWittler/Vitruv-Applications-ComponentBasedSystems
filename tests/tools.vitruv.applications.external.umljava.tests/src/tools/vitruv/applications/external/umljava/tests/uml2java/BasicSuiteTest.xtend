@@ -1,11 +1,11 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
-import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
-import org.junit.jupiter.api.Test
 import org.emftext.language.java.containers.CompilationUnit
+import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
-import org.emftext.language.java.literals.LiteralsFactory
+import org.junit.jupiter.api.Test
+import tools.vitruv.domains.java.util.JavaPersistenceHelper
 
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 	@Test
@@ -44,7 +44,9 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 	}
 	
 	override enrichJavaModel() {
-		resourceAt(testProjectFolder.resolve("src/com.example.first/Example.java")).record [
+		val javaFilePath = testProjectFolder
+			.resolve(JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))
+		resourceAt(javaFilePath).record [
 			val jCompilationUnit = contents.head as CompilationUnit
 			val jClass = jCompilationUnit.classifiers.head
 			val jClassMethod = jClass.members.get(3) as ClassMethod
