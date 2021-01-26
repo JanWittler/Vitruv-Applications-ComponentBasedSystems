@@ -1,7 +1,12 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
+import java.io.File
 import java.nio.file.Path
+import java.util.HashMap
+import java.util.HashSet
 import java.util.List
+import java.util.Map
+import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
@@ -9,8 +14,8 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
-import tools.vitruv.applications.external.umljava.tests.util.CustomizableUmlToJavaChangePropagationSpecification
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
+import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
@@ -18,13 +23,8 @@ import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
-import java.io.File
-import org.apache.commons.io.FileUtils
-import java.util.Map
 
 import static org.junit.jupiter.api.Assertions.assertEquals
-import java.util.HashSet
-import java.util.HashMap
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -49,8 +49,8 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	override protected getChangePropagationSpecifications() {
-		val spec = new CustomizableUmlToJavaChangePropagationSpecification()
-		spec.setStateBasedChangeResolutionStrategyForUmlDomain(stateBasedStrategyLogger)
+		val spec = new UmlToJavaChangePropagationSpecification()
+		spec.sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
 		return #[spec]; 
 	}
 	
@@ -117,7 +117,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	private def Map<File, FileComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
-		val result = new HashMap<File, Uml2JavaStateBasedChangeTest.FileComparisonResult>()
+		val result = new HashMap<File, StateBasedChangeTest.FileComparisonResult>()
 		if (!actual.exists) {
 			result.put(actual, FileComparisonResult.MISSING_FILE)
 		}
