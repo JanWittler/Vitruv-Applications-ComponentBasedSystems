@@ -4,6 +4,6 @@ import tools.vitruv.applications.external.strategies.BasicStateBasedChangeDiffPr
 
 class BasicIdBasedModelMatchChallengeTest extends ModelMatchChallengeTest {
 	override getDiffProvider() {
-		return new BasicStateBasedChangeDiffProvider()
+		new BasicStateBasedChangeDiffProvider
 	}
 }

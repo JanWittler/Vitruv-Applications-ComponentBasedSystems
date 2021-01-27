@@ -4,6 +4,6 @@ import tools.vitruv.applications.external.strategies.BasicSimilarityBasedStateBa
 
 class BasicSimilarityBasedModelMatchChallengeTest extends ModelMatchChallengeTest {
 	override getDiffProvider() {
-		return new BasicSimilarityBasedStateBasedChangeDiffProvider()
+		new BasicSimilarityBasedStateBasedChangeDiffProvider
 	}
 }
