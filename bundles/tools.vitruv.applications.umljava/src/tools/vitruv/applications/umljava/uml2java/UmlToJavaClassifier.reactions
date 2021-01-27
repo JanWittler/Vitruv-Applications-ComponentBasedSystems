@@ -114,19 +114,23 @@ reaction UmlClassifierInserted {
 routine moveJavaClassifier(uml::Classifier umlClassifier, uml::Package umlPackage) {
 	match {
 		val javaClassifier = retrieve java::ConcreteClassifier corresponding to umlClassifier
+		val javaPackage = retrieve optional java::Package corresponding to umlPackage
 		val javaCompilationUnit = retrieve java::CompilationUnit corresponding to umlClassifier 
-		val javaPackage = retrieve java::Package corresponding to umlPackage
-			with !javaPackage.compilationUnits.contains(javaCompilationUnit)
+			with !javaPackage.isPresent || !javaPackage.get.compilationUnits.contains(javaCompilationUnit)
 	}
 	action {
 		update javaCompilationUnit {
 			javaCompilationUnit.namespaces.clear
-			javaCompilationUnit.namespaces += javaPackage.javaPackageAsStringList
+			javaPackage.ifPresent [
+				javaCompilationUnit.namespaces += javaPackageAsStringList
+			]
+			javaCompilationUnit.name = javaClassifier.name + ".java"
 			persistProjectRelative(umlClassifier, javaCompilationUnit, buildJavaFilePath(javaCompilationUnit));
+			
 		}
-		update javaPackage {
-			javaPackage.compilationUnits += javaCompilationUnit
-		}
+		call javaPackage.ifPresent [
+			compilationUnits += javaCompilationUnit
+		]
     }
 }
 
