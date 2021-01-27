@@ -43,6 +43,10 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 		testModels("RemoveAttribute")
 	}
 	
+	override resourcesDirectory() {
+		super.resourcesDirectory.resolve("BasicSuite")
+	}
+	
 	override enrichJavaModel() {
 		val javaFilePath = testProjectFolder
 			.resolve(JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))

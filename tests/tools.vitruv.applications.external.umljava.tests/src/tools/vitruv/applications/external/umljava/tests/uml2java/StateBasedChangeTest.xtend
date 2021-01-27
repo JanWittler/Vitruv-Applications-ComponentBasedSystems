@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-	public static val RESOURCESPATH = "testresources"
 	public static val INITIALMODELNAME = "Base"
 	public static val MODELFILEEXTENSION ="uml"
 	
@@ -63,7 +62,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	def resourcesDirectory() {
-		Path.of(RESOURCESPATH)
+		Path.of("testresources")
 	}
 	
 	def getSourceModelPath() {
