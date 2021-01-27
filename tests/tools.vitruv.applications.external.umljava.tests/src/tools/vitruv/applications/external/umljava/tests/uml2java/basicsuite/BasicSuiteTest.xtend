@@ -1,10 +1,11 @@
-package tools.vitruv.applications.external.umljava.tests.uml2java
+package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
 import org.emftext.language.java.containers.CompilationUnit
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
+import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
 
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {

@@ -1,4 +1,4 @@
-package tools.vitruv.applications.external.umljava.tests.uml2java
+package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
 import tools.vitruv.applications.external.strategies.BasicSimilarityBasedStateBasedChangeDiffProvider
 import org.junit.jupiter.api.Test
