@@ -1,7 +1,9 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchallenge
 
+import org.emftext.language.java.containers.CompilationUnit
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
+import tools.vitruv.domains.java.util.JavaPersistenceHelper
 
 /**
  * A test suite mimicking the tests described in 
@@ -34,5 +36,16 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
 	}
 	
 	override enrichJavaModel() {
+		val javaFilePath = testProjectFolder
+			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de"]))
+		resourceAt(javaFilePath).record [
+			val jCompilationUnit = contents.head as CompilationUnit
+			val jClass = jCompilationUnit.classifiers.head
+			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
+			//TODO: the preferred update of simply removing the setter is currently not possible 
+			// as this triggers a crash in the UUID resolver
+			jClassMethod.name = "changeSpecies"
+		]
+		propagate
 	}
 }

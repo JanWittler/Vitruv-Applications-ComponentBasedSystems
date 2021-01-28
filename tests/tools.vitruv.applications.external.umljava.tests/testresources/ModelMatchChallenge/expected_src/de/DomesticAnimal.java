@@ -16,7 +16,7 @@ public class DomesticAnimal {
 	public String getSpecies() {
 		return this.species;
 	}
-	public void setSpecies(String species) {
+	public void changeSpecies(String species) {
 		this.species = species;
 	}
 	public Owner owner;

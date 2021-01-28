@@ -50,7 +50,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	override protected getChangePropagationSpecifications() {
 		val spec = new UmlToJavaChangePropagationSpecification()
 		spec.sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
-		return #[spec]; 
+		return #[spec]
 	}
 	
 	def getDerivedChangeSequence() {
