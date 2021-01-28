@@ -2,6 +2,8 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchal
 
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 import org.junit.jupiter.api.Test
+import tools.vitruv.domains.java.util.JavaPersistenceHelper
+import org.emftext.language.java.containers.CompilationUnit
 
 /**
  * A test suite mimicking the exchange tests described in 
@@ -19,6 +21,24 @@ abstract class ModelMatchChallengeExchangeTest extends Uml2JavaStateBasedChangeT
 	}
 	
 	override enrichJavaModel() {
+		val javaFilePath1 = testProjectFolder
+			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de", "shop"]))
+		resourceAt(javaFilePath1).record [
+			val jCompilationUnit = contents.head as CompilationUnit
+			val jClass = jCompilationUnit.classifiers.head
+			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
+			jClassMethod.name = "changeSpecies"
+		]
+		propagate
 		
+		val javaFilePath2 = testProjectFolder
+			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimalNew.java", #["de", "core"]))
+		resourceAt(javaFilePath2).record [
+			val jCompilationUnit = contents.head as CompilationUnit
+			val jClass = jCompilationUnit.classifiers.head
+			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
+			jClassMethod.name = "adjustSpecies"
+		]
+		propagate
 	}
 }

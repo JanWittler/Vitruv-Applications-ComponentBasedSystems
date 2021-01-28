@@ -15,7 +15,7 @@ public class DomesticAnimalNew {
 	public String getSpecies() {
 		return this.species;
 	}
-	public void setSpecies(String species) {
+	public void adjustSpecies(String species) {
 		this.species = species;
 	}
 }
