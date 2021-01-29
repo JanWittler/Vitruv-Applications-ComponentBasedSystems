@@ -11,7 +11,6 @@ import org.custommonkey.xmlunit.Difference
 import org.custommonkey.xmlunit.DifferenceConstants
 import org.custommonkey.xmlunit.DifferenceListener
 import org.custommonkey.xmlunit.XMLUnit
-import org.junit.jupiter.api.BeforeEach
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
@@ -19,16 +18,15 @@ import tools.vitruv.domains.java.util.JavaPersistenceHelper
 import static org.custommonkey.xmlunit.XMLUnit.*
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
-	
-	@BeforeEach
-	def extendTargetModel() {
-		enrichJavaModel()
-		assertTargetModelEquals(resourcesDirectory().resolve("expected_src"))
+	override preloadModel(Path path) {
+		super.preloadModel(path)
+		enrichJavaModel(path)
+		assertTargetModelEquals(path.parent.resolve("expected_src"))
 	}
 	
-	def void enrichJavaModel()
+	def void enrichJavaModel(Path preloadedModelPath)
 	
-	def void testModels(String directory) {
+	def testModels(String directory) {
 		val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
 		resolveChangedState(testDirectory.resolve("Model.uml"))
 		assertTargetModelEquals(testDirectory.resolve("expected_src"))
@@ -104,7 +102,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 		return diff.similar ? FileComparisonResult.CORRECT : FileComparisonResult.INCORRECT_FILE
 	}
 	
-	static class UMLDefaultValuesDifferenceListener implements DifferenceListener {
+	private static class UMLDefaultValuesDifferenceListener implements DifferenceListener {
 		override differenceFound(Difference difference) {
 			if (difference.id === DifferenceConstants.ELEMENT_NUM_ATTRIBUTES_ID) {
 				// triggers detailed comparison of missing attributes

@@ -25,11 +25,15 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.TestInfo
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-	public static val INITIALMODELNAME = "Base"
-	public static val MODELFILEEXTENSION ="uml"
+	public static val INITIAL_MODEL_NAME = "Base"
+	public static val MODEL_FILE_EXTENSION ="uml"
+	
+	/** For any test case tagged with this tag, the model preloading will be skipped. */
+	public static val CUSTOM_INITIAL_MODEL_TAG = "StateBasedChangeTest.CustomInitialModel"
 	
 	protected var Path testProjectFolder
 	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
@@ -38,13 +42,19 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
 	
 	@BeforeEach
-	def void setup(@TestProject Path testProjectFolder) {
-		this.testProjectFolder = testProjectFolder
+	def setupStrategyLogger() {
 		this.propagatedChanges = null
 		this.stateBasedStrategyLogger.reset()
 		this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
+	}
+	
+	@BeforeEach
+	def setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
+		this.testProjectFolder = testProjectFolder
 		
-		preloadModel(resourcesDirectory.resolve(INITIALMODELNAME + "." + MODELFILEEXTENSION))
+		if (!testInfo.tags.contains(CUSTOM_INITIAL_MODEL_TAG)) {
+			preloadModel(resourcesDirectory.resolve(INITIAL_MODEL_NAME + "." + MODEL_FILE_EXTENSION))
+		}
 	}
 	
 	override protected getChangePropagationSpecifications() {
@@ -66,7 +76,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	}
 	
 	def getSourceModelPath() {
-		modelsDirectory.resolve("Model." + MODELFILEEXTENSION)
+		modelsDirectory.resolve("Model." + MODEL_FILE_EXTENSION)
 	}
 	
 	def resolveChangedState(Path changedModelPath) {
@@ -76,7 +86,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		assertSourceModelEquals(changedModelPath.toFile)
 	}
 	
-	private def preloadModel(Path path) {
+	def preloadModel(Path path) {
 		val originalModel = loadModel(path)
 		resourceAt(sourceModelPath).record [
 			contents += EcoreUtil.copy(originalModel.contents.head)

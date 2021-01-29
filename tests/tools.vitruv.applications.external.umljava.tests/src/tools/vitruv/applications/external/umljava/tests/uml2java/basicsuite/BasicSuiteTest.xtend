@@ -7,6 +7,7 @@ import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
+import java.nio.file.Path
 
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 	@Test
@@ -48,7 +49,7 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 		super.resourcesDirectory.resolve("BasicSuite")
 	}
 	
-	override enrichJavaModel() {
+	override enrichJavaModel(Path preloadedModelPath) {
 		val javaFilePath = testProjectFolder
 			.resolve(JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))
 		resourceAt(javaFilePath).record [
