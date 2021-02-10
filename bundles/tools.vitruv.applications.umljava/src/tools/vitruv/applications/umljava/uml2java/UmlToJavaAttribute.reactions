@@ -23,6 +23,35 @@ reaction UmlAttributeCreatedInClass {
     }
 }
 
+reaction UmlAttributeMovedToClass {
+	after element uml::Property inserted in uml::Class[ownedAttribute]
+	call {
+		moveJavaAttribute(affectedEObject, newValue)
+	}
+}
+
+routine moveJavaAttribute(uml::Classifier uClassifier, uml::Property umlAttribute) {
+	match {
+		val jClassifier = retrieve java::ConcreteClassifier corresponding to uClassifier
+		val jAttribute = retrieve java::Field corresponding to umlAttribute
+	}
+	action {
+		call {
+			val hasGetter = javaGetterForAttributeExists(jAttribute)
+			val hasSetter = javaSetterForAttributeExists(jAttribute)
+			removeJavaGettersOfAttribute(jAttribute)
+			removeJavaSettersOfAttribute(jAttribute)
+			jClassifier.members += jAttribute
+			if (hasGetter) {
+				createJavaGetter(jAttribute)
+			}
+			if (hasSetter) {
+				createJavaSetter(jAttribute)
+			}
+		}
+	}
+}
+
 //We can not define one single reaction for attribute creation in enums and classes because
 //They don't have a common superclass for "having ownedAttributes"
 reaction UmlAttributeCreatedInDataType {//Enum is a DataType
