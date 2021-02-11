@@ -59,6 +59,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	 * Compares two java files.
 	 * The comparison compares each line of the files for equality, leading or trailing whitespaces are ignored.
 	 * Empty lines are ignored.
+	 * Spaces before semicolon are ignored.
 	 * Lines starting with an import statement are ignored as imports are currently not cleaned up by the consistency mechanism.
 	 */
 	def compareJavaFiles(File expected, File actual) {
@@ -86,7 +87,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	}
 	
 	private def readLineTrimmed(BufferedReader reader) {
-		reader.readLine?.trim
+		reader.readLine?.trim?.replace(" ;", ";")
 	}
 	
 	def compareUMLFiles(File expected, File actual) {

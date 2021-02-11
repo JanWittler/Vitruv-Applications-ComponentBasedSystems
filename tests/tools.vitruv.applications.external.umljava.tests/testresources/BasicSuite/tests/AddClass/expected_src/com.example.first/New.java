@@ -1,4 +1,4 @@
-package com.example.first ;
+package com.example.first;
 
 
 public class New {

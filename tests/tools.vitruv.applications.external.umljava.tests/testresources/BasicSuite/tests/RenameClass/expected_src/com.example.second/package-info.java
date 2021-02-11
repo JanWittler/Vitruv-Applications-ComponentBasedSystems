@@ -1,2 +1,2 @@
-package com.example.second ;
+package com.example.second;
 

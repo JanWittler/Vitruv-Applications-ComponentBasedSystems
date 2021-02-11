@@ -1,4 +1,4 @@
-package com.example.second ;
+package com.example.second;
 
 import java.lang.String;
 
