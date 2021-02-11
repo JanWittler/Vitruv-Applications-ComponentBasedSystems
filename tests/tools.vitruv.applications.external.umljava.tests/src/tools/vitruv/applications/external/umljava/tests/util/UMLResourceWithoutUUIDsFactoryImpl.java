@@ -3,7 +3,6 @@ package tools.vitruv.applications.external.umljava.tests.util;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.uml2.uml.internal.resource.UMLResourceFactoryImpl;
-import org.eclipse.uml2.uml.internal.resource.UMLResourceImplWithoutUUIDs;
 import org.eclipse.uml2.uml.resource.UMLResource;
 
 @SuppressWarnings("restriction")
