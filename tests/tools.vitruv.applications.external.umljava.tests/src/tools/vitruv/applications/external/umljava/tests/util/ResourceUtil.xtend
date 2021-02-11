@@ -18,10 +18,13 @@ class ResourceUtil {
 	 */
 	static def copy(Resource resource) {
 		val resourceSet = new ResourceSetImpl
-		val copy = resourceSet.createResource(resource.URI)
-		copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
-		copyIDs(resource, copy)
-		return copy
+		resourceSet.resourceFactoryRegistry.getExtensionToFactoryMap().put("uml", new UMLResourceWithoutUUIDsFactoryImpl());
+		
+//		val copy = resourceSet.createResource(resource.URI)
+//		copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
+//		copyIDs(resource, copy)
+//		copy.save(emptyMap)
+		return resourceSet.getResource(resource.URI, true)
 	}
 	
 	/**
