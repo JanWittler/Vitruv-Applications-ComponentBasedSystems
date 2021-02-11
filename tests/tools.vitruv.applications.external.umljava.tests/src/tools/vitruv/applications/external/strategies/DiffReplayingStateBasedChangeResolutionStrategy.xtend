@@ -42,7 +42,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
 		}
 		// Setup resolver and copy state:
 		val uuidGeneratorAndResolver = new UuidGeneratorAndResolverImpl(resolver, resolver.resourceSet, true)
-		val currentStateCopy = ResourceUtil.copy(currentState)
+		val currentStateCopy = ResourceUtil.reload(currentState)
 		// Create change sequences:
 		val diffs = compareStates(newState, currentStateCopy)
 		val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)

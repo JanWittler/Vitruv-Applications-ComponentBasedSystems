@@ -2,8 +2,8 @@ package tools.vitruv.applications.external.umljava.tests.util
 
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.emf.ecore.xmi.XMLResource
+import org.eclipse.uml2.uml.resource.UMLResource
 import tools.vitruv.framework.domains.repository.DomainAwareResource
 
 /**
@@ -11,20 +11,15 @@ import tools.vitruv.framework.domains.repository.DomainAwareResource
  */
 class ResourceUtil {
 	/**
-	 * Copies the given resource. 
-	 * In contrast to {@link EcoreUtil#copyAll EcoreUtil.copyAll} this method also copies the elements' IDs if there are any.
-	 * @param resource The resource to copy.
-	 * @return Returns a new {@link Resource} with the contents of the provided resource.
+	 * Reloads the given resource.
+	 * This helper is necessary since resources provided by the VSUM can not be modified.
+	 * @param resource The resource to reload.
+	 * @return Returns a new {@link Resource} loaded from the URI of the provided resource.
 	 */
-	static def copy(Resource resource) {
+	static def reload(Resource resource) {
 		val resourceSet = new ResourceSetImpl
-		resourceSet.resourceFactoryRegistry.getExtensionToFactoryMap().put("uml", new UMLResourceWithoutUUIDsFactoryImpl());
-		
-//		val copy = resourceSet.createResource(resource.URI)
-//		copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
-//		copyIDs(resource, copy)
-//		copy.save(emptyMap)
-		return resourceSet.getResource(resource.URI, true)
+		resourceSet.resourceFactoryRegistry.getExtensionToFactoryMap().put(UMLResource::FILE_EXTENSION, new UMLResourceWithoutUUIDsFactoryImpl());
+		resourceSet.getResource(resource.URI, true)
 	}
 	
 	/**
