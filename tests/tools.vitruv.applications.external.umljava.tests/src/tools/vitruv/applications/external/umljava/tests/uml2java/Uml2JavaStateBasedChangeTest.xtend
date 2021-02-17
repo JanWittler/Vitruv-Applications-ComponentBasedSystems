@@ -6,6 +6,7 @@ import java.io.FileInputStream
 import java.io.FileReader
 import java.io.InputStreamReader
 import java.nio.file.Path
+import java.util.HashSet
 import org.apache.commons.io.FilenameUtils
 import org.custommonkey.xmlunit.Difference
 import org.custommonkey.xmlunit.DifferenceConstants
@@ -109,14 +110,33 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 				// triggers detailed comparison of missing attributes
 				return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
 			}
+			else if (difference.id === DifferenceConstants.ATTR_VALUE_ID) {
+				if (difference.controlNodeDetail.node.nodeName == "memberEnd") {
+					val controlMembers = difference.controlNodeDetail.value.split(" ")
+					val testMembers = difference.testNodeDetail.value.split(" ")
+					if (controlMembers.size == testMembers.size &&
+						new HashSet(controlMembers) == new HashSet(testMembers)
+					) {
+						//memberEnd order is arbitrary
+						return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
+					}
+				}
+			}
 			else if (difference.id === DifferenceConstants.ATTR_NAME_NOT_FOUND_ID) {
 				if (difference.controlNodeDetail.value == "type") {
 					val type = difference.controlNodeDetail.node.attributes.getNamedItem("xmi:type").nodeValue
 					val nodeType = difference.controlNodeDetail.node.nodeName
+					val parentType = difference.controlNodeDetail.node.parentNode?.nodeName
 					if ((type == "uml:PackageImport" && nodeType == "packageImport") ||
 						(type == "uml:Property" && nodeType == "ownedAttribute") ||
 						(type == "uml:Operation" && nodeType == "ownedOperation") ||
-						(type == "uml:Parameter" && nodeType == "ownedParameter")
+						(type == "uml:Parameter" && nodeType == "ownedParameter") ||
+						//annotations
+						(type == "ecore:EAnnotation" && nodeType == "eAnnotations") ||
+						(type == "uml:Property" && nodeType == "ownedEnd") ||
+						(type == "ecore:EStringToStringMapEntry" && nodeType == "details" && parentType == "eAnnotations") ||
+						//generalization
+						(type == "uml:Generalization" && nodeType == "generalization")
 					)
 					return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
 				}
@@ -127,6 +147,9 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 					if (visibility == "public" && type == "uml:Class") {
 						return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
 					}
+				}
+				else if (difference.controlNodeDetail.value == "ecore") {
+					return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_SIMILAR
 				}
 			}
 			return DifferenceListener.RETURN_ACCEPT_DIFFERENCE
