@@ -30,6 +30,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 	def testModels(String directory) {
 		val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
 		resolveChangedState(testDirectory.resolve("Model.uml"))
+		logChanges()
 		assertTargetModelEquals(testDirectory.resolve("expected_src"))
 	}
 	

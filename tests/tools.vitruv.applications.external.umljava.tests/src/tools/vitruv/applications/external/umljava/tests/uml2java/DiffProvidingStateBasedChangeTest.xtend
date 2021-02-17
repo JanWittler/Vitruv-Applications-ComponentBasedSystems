@@ -24,11 +24,11 @@ abstract class DiffProvidingStateBasedChangeTest extends StateBasedChangeTest {
 		return diffProviderLogger.getDiffs()
 	}
 	
-	override printChanges() {
-		super.printChanges()
-		println('''diffs:
+	override serializedChanges() {
+		super.serializedChanges + "\n" + 
+		'''diffs:
 	«FOR diff: getDerivedDiffs()»
 	«diff»
-«ENDFOR»''')
+«ENDFOR»'''
 	}
 }

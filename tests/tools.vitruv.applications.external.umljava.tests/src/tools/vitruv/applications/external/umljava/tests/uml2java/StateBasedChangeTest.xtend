@@ -1,6 +1,7 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.io.File
+import java.io.FileWriter
 import java.nio.file.Path
 import java.util.HashMap
 import java.util.HashSet
@@ -12,6 +13,7 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
@@ -25,7 +27,6 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.TestInfo
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -163,10 +164,22 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 		return FileComparisonResult.INCORRECT_FILE
 	}
 	
-	def void printChanges() {
-		println('''propagated changes:
-	«propagatedChanges»''')
-		println('''vitruvius changes:
-	«getDerivedChangeSequence()»''')
+	def serializedChanges() {
+		'''propagated changes:
+	«propagatedChanges»''' + "\n" +
+		'''vitruvius changes:
+	«getDerivedChangeSequence()»'''
+	}
+	
+	def logChanges() {
+		val output = testProjectFolder.resolve("Changes.log").toFile
+		output.createNewFile
+		val writer = new FileWriter(output.absolutePath)
+		writer.write(serializedChanges)
+		writer.close
+	}
+	
+	final def printChanges() {
+		println(serializedChanges)
 	}
 }
