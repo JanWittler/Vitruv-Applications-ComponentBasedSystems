@@ -45,6 +45,16 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 		testModels("RemoveAttribute")
 	}
 	
+	@Test
+	def testRenameAttribute() {
+		testModels("RenameAttribute")
+	}
+	
+	@Test
+	def testRenameMethod() {
+		testModels("RenameMethod")
+	}
+	
 	override resourcesDirectory() {
 		super.resourcesDirectory.resolve("BasicSuite")
 	}
@@ -55,7 +65,7 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 		resourceAt(javaFilePath).record [
 			val jCompilationUnit = contents.head as CompilationUnit
 			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.get(3) as ClassMethod
+			val jClassMethod = jClass.members.filter [ name == "nameEquals" ].head as ClassMethod
 			
 			val jStatement = StatementsFactory.eINSTANCE.createReturn()
 			val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
