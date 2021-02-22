@@ -94,6 +94,24 @@ abstract class SmallGeneratedTest extends GeneratedUml2JavaStateBasedChangeTest 
 		resolveChangedState(resource)
 	}
 	
+	@Test
+	def testRenameSingleMethod() {
+		val resource = loadModel(resourcesDirectory.resolve(INITIAL_MODEL_NAME + "." + MODEL_FILE_EXTENSION))
+		val model = resource.contents.head as Model
+		val operation = getClass(#[0], 1, model).ownedOperations.get(0)
+		operation.name = "renamed"
+		resolveChangedState(resource)
+	}
+	
+	@Test
+	def testRenameSingleAttribute() {
+		val resource = loadModel(resourcesDirectory.resolve(INITIAL_MODEL_NAME + "." + MODEL_FILE_EXTENSION))
+		val model = resource.contents.head as Model
+		val attribute = getClass(#[0, 0], 0, model).ownedAttributes.get(0)
+		attribute.name = "renamed"
+		resolveChangedState(resource)
+	}
+	
 	def resolveChangedState(Resource changedModel) {
 		val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
 		propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
