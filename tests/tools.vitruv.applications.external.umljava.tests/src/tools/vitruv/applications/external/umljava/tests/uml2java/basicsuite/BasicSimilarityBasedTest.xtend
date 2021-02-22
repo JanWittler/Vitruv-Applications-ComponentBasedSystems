@@ -4,6 +4,6 @@ import tools.vitruv.applications.external.strategies.BasicSimilarityBasedStateBa
 
 class BasicSimilarityBasedTest extends BasicSuiteTest {
 	override getDiffProvider() {
-		return new BasicSimilarityBasedStateBasedChangeDiffProvider()
+		return new BasicSimilarityBasedStateBasedChangeDiffProvider
 	}
 }

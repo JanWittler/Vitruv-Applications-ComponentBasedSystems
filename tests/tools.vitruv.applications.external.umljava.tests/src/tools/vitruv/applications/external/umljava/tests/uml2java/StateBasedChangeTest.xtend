@@ -38,7 +38,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 	
 	protected var Path testProjectFolder
 	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
-	@Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
+	@Accessors(PUBLIC_GETTER) protected var List<PropagatedChange> propagatedChanges
 	
 	def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
 	

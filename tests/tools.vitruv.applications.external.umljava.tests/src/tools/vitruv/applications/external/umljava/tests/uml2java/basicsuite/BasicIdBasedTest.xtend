@@ -4,6 +4,6 @@ import tools.vitruv.applications.external.strategies.BasicStateBasedChangeDiffPr
 
 class BasicIdBasedTest extends BasicSuiteTest {
 	override getDiffProvider() {
-		return new BasicStateBasedChangeDiffProvider()
+		return new BasicStateBasedChangeDiffProvider
 	}
 }
