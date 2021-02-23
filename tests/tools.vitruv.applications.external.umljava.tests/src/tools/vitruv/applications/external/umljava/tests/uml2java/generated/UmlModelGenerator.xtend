@@ -44,7 +44,7 @@ class UmlModelGenerator extends LegacyVitruvApplicationTest {
 	
 	@Test
 	def void generateLargeModel() {
-		createUMLModel(#[4, 2, 2, 1], 10)
+		createUMLModel(#[3,2,2,2,2,2,2], 10)
 	}
 	
 	override protected getChangePropagationSpecifications() {
