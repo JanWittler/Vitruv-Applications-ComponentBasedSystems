@@ -144,7 +144,9 @@ class JavaMemberAndParameterUtil {
      * @param jAttribute the attribute for which a getter should be created
      */
     def static createGetterForAttribute(Field jAttribute) {
-        createJavaGetterForAttribute(jAttribute, JavaVisibility.PUBLIC)
+        val jGetter = createJavaGetterForAttribute(jAttribute, JavaVisibility.PUBLIC)
+        jAttribute.containingConcreteClassifier.members += jGetter
+        return jGetter
     }
 
     /**
@@ -152,7 +154,9 @@ class JavaMemberAndParameterUtil {
      * @param jAttribute the attribute for which a getter should be created
      */
     def static createSetterForAttribute(Field jAttribute) {
-        createJavaSetterForAttribute(jAttribute, JavaVisibility.PUBLIC)
+        val jSetter = createJavaSetterForAttribute(jAttribute, JavaVisibility.PUBLIC)
+        jAttribute.containingConcreteClassifier.members += jSetter
+        return jSetter
     }
 
     /**
