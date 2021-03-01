@@ -3,7 +3,7 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchal
 import tools.vitruv.applications.external.strategies.BasicStateBasedChangeDiffProvider
 
 class BasicIdBasedModelMatchChallengeTest extends ModelMatchChallengeTest {
-	override getDiffProvider() {
-		new BasicStateBasedChangeDiffProvider
-	}
+    override getDiffProvider() {
+        new BasicStateBasedChangeDiffProvider
+    }
 }

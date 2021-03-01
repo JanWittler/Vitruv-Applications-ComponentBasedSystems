@@ -4,7 +4,7 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.thesissystemexa
 import tools.vitruv.applications.external.strategies.BasicSimilarityBasedStateBasedChangeDiffProvider
 
 class BasicSimilarityBasedThesisSystemExampleTest extends ThesisSystemExampleTest {
-	override getDiffProvider() {
-		new BasicSimilarityBasedStateBasedChangeDiffProvider
-	}
+    override getDiffProvider() {
+        new BasicSimilarityBasedStateBasedChangeDiffProvider
+    }
 }

@@ -5,5 +5,5 @@ import org.eclipse.emf.common.notify.Notifier
 import org.eclipse.emf.compare.Diff
 
 interface StateBasedChangeDiffProvider {
-	def List<Diff> getChangeSequences(Notifier newState, Notifier oldState)
+    def List<Diff> getChangeSequences(Notifier newState, Notifier oldState)
 }

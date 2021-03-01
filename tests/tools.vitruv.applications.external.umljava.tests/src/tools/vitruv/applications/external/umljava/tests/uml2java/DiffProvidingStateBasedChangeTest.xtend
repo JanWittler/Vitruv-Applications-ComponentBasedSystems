@@ -7,28 +7,27 @@ import tools.vitruv.applications.external.strategies.StateBasedChangeDiffProvide
 import org.junit.jupiter.api.BeforeEach
 
 abstract class DiffProvidingStateBasedChangeTest extends StateBasedChangeTest {
-	val diffProviderLogger = new StateBasedChangeDiffProviderStorage()
-	val strategy = new DiffReplayingStateBasedChangeResolutionStrategy(diffProviderLogger)
-	
-	override getStateBasedResolutionStrategy() { return strategy }
-	
-	def StateBasedChangeDiffProvider getDiffProvider()
-	
-	@BeforeEach
-	def void setupDiffProvider() {
-		diffProviderLogger.reset()
-		diffProviderLogger.setDiffProvider(getDiffProvider())
-	}
-	
-	def getDerivedDiffs() {
-		return diffProviderLogger.getDiffs()
-	}
-	
-	override serializedChanges() {
-		super.serializedChanges + "\n" + 
-		'''diffs:
-	«FOR diff: getDerivedDiffs()»
-	«diff»
-«ENDFOR»'''
-	}
+    val diffProviderLogger = new StateBasedChangeDiffProviderStorage()
+    val strategy = new DiffReplayingStateBasedChangeResolutionStrategy(diffProviderLogger)
+
+    override getStateBasedResolutionStrategy() { return strategy }
+
+    def StateBasedChangeDiffProvider getDiffProvider()
+
+    @BeforeEach
+    def void setupDiffProvider() {
+        diffProviderLogger.reset()
+        diffProviderLogger.setDiffProvider(getDiffProvider())
+    }
+
+    def getDerivedDiffs() {
+        return diffProviderLogger.getDiffs()
+    }
+
+    override serializedChanges() {
+        super.serializedChanges + "\n" + '''diffs:
+        «FOR diff : getDerivedDiffs()»
+            «diff»
+        «ENDFOR»'''
+    }
 }

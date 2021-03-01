@@ -4,13 +4,13 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.uml2.uml.internal.resource.UMLResourceImpl;
 
 /**
- * Overwrites {@link UMLResourceImpl} deactivating deprecated resource UUID usage.
+ * Overwrites {@link UMLResourceImpl} deactivating deprecated resource UUID
+ * usage.
  * 
  * @author Heiko Klare
  */
 @SuppressWarnings("restriction")
-public class UMLResourceImplWithoutUUIDs
-		extends UMLResourceImpl {
+public class UMLResourceImplWithoutUUIDs extends UMLResourceImpl {
 
 	public UMLResourceImplWithoutUUIDs(URI uri) {
 		super(uri);

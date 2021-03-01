@@ -4,7 +4,7 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.thesissystemexa
 import tools.vitruv.applications.external.strategies.BasicStateBasedChangeDiffProvider
 
 class BasicIdBasedThesisSystemExampleTest extends ThesisSystemExampleTest {
-	override getDiffProvider() {
-		new BasicStateBasedChangeDiffProvider
-	}
+    override getDiffProvider() {
+        new BasicStateBasedChangeDiffProvider
+    }
 }
