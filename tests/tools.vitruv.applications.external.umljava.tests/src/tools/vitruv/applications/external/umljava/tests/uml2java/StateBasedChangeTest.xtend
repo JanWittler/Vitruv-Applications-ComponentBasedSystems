@@ -84,6 +84,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val changedModel = loadModel(changedModelPath)
         val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
+        logChanges()
         assertSourceModelEquals(changedModelPath.toFile)
     }
 
@@ -91,14 +92,9 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val originalModel = loadModel(path)
         resourceAt(sourceModelPath).record [
             contents += EcoreUtil.copy(originalModel.contents.head)
+            ResourceUtil.copyIDs(originalModel, it)
         ]
         propagate
-
-        // preserve original ids
-        val model = virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString)).resource
-        ResourceUtil.copyIDs(originalModel, model)
-        model.save(emptyMap)
-
         assertSourceModelEquals(path.toFile)
     }
 

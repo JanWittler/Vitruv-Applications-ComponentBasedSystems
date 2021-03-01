@@ -18,6 +18,7 @@ import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.uuid.UuidGeneratorAndResolver
 import tools.vitruv.framework.uuid.UuidGeneratorAndResolverImpl
 import tools.vitruv.framework.uuid.UuidResolver
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 
 class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
     val StateBasedChangeDiffProvider diffProvider
@@ -76,12 +77,14 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
     }
 
     /**
-     * Creates a new resource set, creates a resource and copies the content of the orignal resource.
+     * Creates a new resource set, creates a resource and copies the content of the original resource.
      */
     private def Resource copyInto(Resource resource, ResourceSet resourceSet) {
         val uri = resource.URI
         val copy = resourceSet.resourceFactoryRegistry.getFactory(uri).createResource(uri)
         copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
+        val correctIDsResource = resourceSet.getResource(uri, true)
+        ResourceUtil.copyIDs(correctIDsResource, copy)
         resourceSet.resources += copy
         return copy
     }
