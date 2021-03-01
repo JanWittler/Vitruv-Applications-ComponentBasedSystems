@@ -22,8 +22,8 @@ class TransitiveChangeSetup {
 		specifications += new UmlToJavaChangePropagationSpecification
 		specifications += new JavaToUmlChangePropagationSpecification
 		if (!linearNetwork) {
-//			specifications += new Pcm2JavaChangePropagationSpecification
-//			specifications += new Java2PcmChangePropagationSpecification
+			specifications += new Pcm2JavaChangePropagationSpecification
+			specifications += new Java2PcmChangePropagationSpecification
 		}
 		return specifications
 	}
