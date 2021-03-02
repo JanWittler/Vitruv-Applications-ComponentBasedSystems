@@ -1,6 +1,8 @@
 package tools.vitruv.applications.external.umljava.tests.util
 
 import org.eclipse.emf.ecore.resource.Resource
+import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.emf.ecore.xmi.XMLResource
 import tools.vitruv.framework.domains.repository.DomainAwareResource
 
@@ -8,6 +10,21 @@ import tools.vitruv.framework.domains.repository.DomainAwareResource
  * @author Jan Wittler
  */
 class ResourceUtil {
+    /**
+     * Creates a copy of the given resource in the given resourceSet. 
+     * In addition to {@link EcoreUtil#copyAll}, IDs are also copied if present.
+     * @param resource The resource to create a copy of.
+     * @param resourceSet The resource set in which the copy should be created.
+     */
+    static def createCopy(Resource resource, ResourceSet resourceSet) {
+        val uri = resource.URI
+        val copy = resourceSet.resourceFactoryRegistry.getFactory(uri).createResource(uri)
+        copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
+        copyIDs(resource, copy)
+        resourceSet.resources += copy
+        return copy
+    }
+
     /**
      * Copies the IDs of the resource's elements to the destination.
      * @param source The resource to get the IDs from.

@@ -8,9 +8,8 @@ import org.eclipse.emf.compare.Diff
 import org.eclipse.emf.compare.merge.BatchMerger
 import org.eclipse.emf.compare.merge.IMerger
 import org.eclipse.emf.ecore.resource.Resource
-import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
-import org.eclipse.emf.ecore.util.EcoreUtil
+import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.framework.change.description.TransactionalChange
 import tools.vitruv.framework.change.description.VitruviusChangeFactory
 import tools.vitruv.framework.change.recording.ChangeRecorder
@@ -18,7 +17,6 @@ import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.uuid.UuidGeneratorAndResolver
 import tools.vitruv.framework.uuid.UuidGeneratorAndResolverImpl
 import tools.vitruv.framework.uuid.UuidResolver
-import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 
 class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
     val StateBasedChangeDiffProvider diffProvider
@@ -42,7 +40,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
         // Setup resolver and copy state:
         val copyResourceSet = new ResourceSetImpl
         val uuidGeneratorAndResolver = new UuidGeneratorAndResolverImpl(resolver, copyResourceSet)
-        val currentStateCopy = currentState.copyInto(copyResourceSet)
+        val currentStateCopy = ResourceUtil.createCopy(currentState, copyResourceSet)
         // Create change sequences:
         val diffs = compareStates(newState, currentStateCopy)
         val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)
@@ -74,18 +72,5 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
             changeRecorder.endRecording
             return changeRecorder.changes
         }
-    }
-
-    /**
-     * Creates a new resource set, creates a resource and copies the content of the original resource.
-     */
-    private def Resource copyInto(Resource resource, ResourceSet resourceSet) {
-        val uri = resource.URI
-        val copy = resourceSet.resourceFactoryRegistry.getFactory(uri).createResource(uri)
-        copy.contents.addAll(EcoreUtil.copyAll(resource.contents))
-        val correctIDsResource = resourceSet.getResource(uri, true)
-        ResourceUtil.copyIDs(correctIDsResource, copy)
-        resourceSet.resources += copy
-        return copy
     }
 }
