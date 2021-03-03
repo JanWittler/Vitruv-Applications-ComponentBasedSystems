@@ -61,7 +61,7 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
             val jCompilationUnit = contents.head as CompilationUnit
             val jClass = jCompilationUnit.classifiers.head
             val jClassMethod = jClass.members.filter[name == "setSpecies"].head
-            EcoreUtil.remove(jClassMethod)
+            EcoreUtil.delete(jClassMethod)
         ]
         propagate
     }
