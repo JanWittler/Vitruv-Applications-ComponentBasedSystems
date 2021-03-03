@@ -57,34 +57,31 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
     private def enrichDefaultJavaModel() {
         val javaFilePath = testProjectFolder.resolve(
             JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de"]))
-        resourceAt(javaFilePath).record [
+        resourceAt(javaFilePath).propagate [
             val jCompilationUnit = contents.head as CompilationUnit
             val jClass = jCompilationUnit.classifiers.head
             val jClassMethod = jClass.members.filter[name == "setSpecies"].head
             EcoreUtil.delete(jClassMethod)
         ]
-        propagate
     }
 
     private def enrichExchangeElementsJavaModel() {
         val javaFilePath1 = testProjectFolder.resolve(
             JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de", "shop"]))
-        resourceAt(javaFilePath1).record [
+        resourceAt(javaFilePath1).propagate [
             val jCompilationUnit = contents.head as CompilationUnit
             val jClass = jCompilationUnit.classifiers.head
             val jClassMethod = jClass.members.filter[name == "setSpecies"].head
             jClassMethod.name = "changeSpecies"
         ]
-        propagate
 
         val javaFilePath2 = testProjectFolder.resolve(
             JavaPersistenceHelper.buildJavaFilePath("DomesticAnimalNew.java", #["de", "core"]))
-        resourceAt(javaFilePath2).record [
+        resourceAt(javaFilePath2).propagate [
             val jCompilationUnit = contents.head as CompilationUnit
             val jClass = jCompilationUnit.classifiers.head
             val jClassMethod = jClass.members.filter[name == "setSpecies"].head
             jClassMethod.name = "adjustSpecies"
         ]
-        propagate
     }
 }

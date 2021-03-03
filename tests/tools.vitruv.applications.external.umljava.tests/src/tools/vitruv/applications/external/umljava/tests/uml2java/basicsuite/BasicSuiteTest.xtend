@@ -62,7 +62,7 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
     override enrichJavaModel(Path preloadedModelPath) {
         val javaFilePath = testProjectFolder.resolve(
             JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))
-        resourceAt(javaFilePath).record [
+        resourceAt(javaFilePath).propagate [
             val jCompilationUnit = contents.head as CompilationUnit
             val jClass = jCompilationUnit.classifiers.head
             val jClassMethod = jClass.members.filter[name == "nameEquals"].head as ClassMethod
@@ -73,6 +73,5 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
             jStatement.returnValue = jBool
             jClassMethod.statements.add(jStatement)
         ]
-        propagate
     }
 }
