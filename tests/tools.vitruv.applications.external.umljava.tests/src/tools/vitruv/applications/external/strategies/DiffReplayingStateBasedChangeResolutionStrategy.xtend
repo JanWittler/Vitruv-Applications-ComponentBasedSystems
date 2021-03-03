@@ -15,8 +15,9 @@ import tools.vitruv.framework.change.description.VitruviusChangeFactory
 import tools.vitruv.framework.change.recording.ChangeRecorder
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.uuid.UuidGeneratorAndResolver
-import tools.vitruv.framework.uuid.UuidGeneratorAndResolverImpl
 import tools.vitruv.framework.uuid.UuidResolver
+
+import static tools.vitruv.framework.uuid.UuidGeneratorAndResolverFactory.createUuidGeneratorAndResolver
 
 class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
     val StateBasedChangeDiffProvider diffProvider
@@ -39,7 +40,7 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
         }
         // Setup resolver and copy state:
         val copyResourceSet = new ResourceSetImpl
-        val uuidGeneratorAndResolver = new UuidGeneratorAndResolverImpl(resolver, copyResourceSet)
+        val uuidGeneratorAndResolver = createUuidGeneratorAndResolver(resolver, copyResourceSet)
         val currentStateCopy = ResourceUtil.createCopy(currentState, copyResourceSet)
         // Create change sequences:
         val diffs = compareStates(newState, currentStateCopy)
