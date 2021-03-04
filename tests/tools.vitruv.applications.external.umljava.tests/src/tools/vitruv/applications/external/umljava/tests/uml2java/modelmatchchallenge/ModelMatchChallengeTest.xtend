@@ -2,7 +2,6 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchal
 
 import java.nio.file.Path
 import java.util.List
-import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.members.ClassMethod
 import org.junit.jupiter.api.Tag
@@ -59,7 +58,7 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         val umlClass = umlClassProvider.apply(#["de"], "DomesticAnimal")
         val umlProperty = umlClass.ownedAttributes.filter [ name == "species" ].head
         getModifiableCorrespondingObject(umlProperty, ClassMethod, "setter").propagate [
-            EcoreUtil.delete(it)
+            name = "changeSpecies"
         ]
     }
 
