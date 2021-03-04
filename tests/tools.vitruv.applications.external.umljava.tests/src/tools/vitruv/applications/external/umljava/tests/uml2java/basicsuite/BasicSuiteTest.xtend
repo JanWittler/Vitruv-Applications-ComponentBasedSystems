@@ -1,13 +1,13 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
-import org.emftext.language.java.containers.CompilationUnit
+import java.nio.file.Path
+import java.util.List
+import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
-import tools.vitruv.domains.java.util.JavaPersistenceHelper
-import java.nio.file.Path
 
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
     @Test
@@ -59,19 +59,15 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
         super.resourcesDirectory.resolve("BasicSuite")
     }
 
-    override enrichJavaModel(Path preloadedModelPath) {
-        val javaFilePath = testProjectFolder.resolve(
-            JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))
-        resourceAt(javaFilePath).propagate [
-            val jCompilationUnit = contents.head as CompilationUnit
-            val jClass = jCompilationUnit.classifiers.head
-            val jClassMethod = jClass.members.filter[name == "nameEquals"].head as ClassMethod
-
+    override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
+        val umlClass = umlClassProvider.apply(#["com.example.first"], "Example")
+        val umlOperation = umlClass.ownedOperations.filter [name == "nameEquals" ].head
+        getModifiableCorrespondingObject(umlOperation, ClassMethod).propagate [
             val jStatement = StatementsFactory.eINSTANCE.createReturn()
             val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
             jBool.value = false
             jStatement.returnValue = jBool
-            jClassMethod.statements.add(jStatement)
+            statements.add(jStatement)
         ]
     }
 }

@@ -27,6 +27,7 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
+import org.eclipse.emf.ecore.EObject
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -79,6 +80,10 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     def getSourceModelPath() {
         modelsDirectory.resolve("Model." + MODEL_FILE_EXTENSION)
     }
+    
+    def getSourceModel() {
+        virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString))
+    }
 
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadModel(changedModelPath)
@@ -97,7 +102,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 
         // preserve original ids
         // this cannot be done in resourceAt as the resource instance is another one than the one in the virtual model
-        val model = virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString)).resource
+        val model = sourceModel.resource
         ResourceUtil.copyIDs(originalModel, model)
         model.save(emptyMap)
 
@@ -163,6 +168,21 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
             return FileComparisonResult.CORRECT
         }
         return FileComparisonResult.INCORRECT_FILE
+    }
+    
+    def <T extends EObject> getModifiableInstance(T original) {
+        val originalURI = EcoreUtil.getURI(original)
+        return originalURI.trimFragment.resourceAt?.getEObject(originalURI.fragment) as T
+    }
+    
+    def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type) {
+        return getModifiableCorrespondingObject(original, type, "")
+    }
+    
+    def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type, String tag) {
+        val correspondences = correspondenceModel.getCorrespondingEObjects(#[original], tag).flatten.filter(type)
+        assertEquals(1, correspondences.size)
+        return getModifiableInstance(correspondences.head)
     }
 
     def serializedChanges() {

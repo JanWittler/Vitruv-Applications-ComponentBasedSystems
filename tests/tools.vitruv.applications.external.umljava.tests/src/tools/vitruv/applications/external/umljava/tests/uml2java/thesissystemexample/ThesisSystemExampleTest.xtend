@@ -2,6 +2,8 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.thesissystemex
 
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 import java.nio.file.Path
+import java.util.List
+import org.eclipse.uml2.uml.Class
 import org.junit.jupiter.api.Test
 
 /**
@@ -28,6 +30,6 @@ abstract class ThesisSystemExampleTest extends Uml2JavaStateBasedChangeTest {
         super.preloadModel(path)
     }
 
-    override enrichJavaModel(Path preloadedModelPath) {
+    override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
     }
 }
