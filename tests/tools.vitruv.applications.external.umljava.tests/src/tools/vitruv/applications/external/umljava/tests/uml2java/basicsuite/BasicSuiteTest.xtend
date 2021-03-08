@@ -51,8 +51,28 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
     }
 
     @Test
+    def testMoveAttribute() {
+        testModels("MoveAttribute")
+    }
+
+    @Test
+    def testAddMethod() {
+        testModels("AddMethod")
+    }
+
+    @Test
+    def testRemoveMethod() {
+        testModels("RemoveMethod")
+    }
+
+    @Test
     def testRenameMethod() {
         testModels("RenameMethod")
+    }
+
+    @Test
+    def testMoveMethod() {
+        testModels("MoveMethod")
     }
 
     override resourcesDirectory() {
