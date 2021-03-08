@@ -9,6 +9,7 @@ import java.util.List
 import java.util.Map
 import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
+import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
+import tools.vitruv.domains.uml.UmlDomainProvider
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
@@ -27,7 +29,6 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
-import org.eclipse.emf.ecore.EObject
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
@@ -42,6 +43,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     @Accessors(PUBLIC_GETTER) protected var List<PropagatedChange> propagatedChanges
 
     def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
+
+    @BeforeEach
+    def void patchDomains() {
+        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+    }
 
     @BeforeEach
     def setupStrategyLogger() {
@@ -60,13 +66,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     }
 
     override protected getChangePropagationSpecifications() {
-        val spec = new UmlToJavaChangePropagationSpecification()
-        spec.sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
-        return #[spec]
+        return #[new UmlToJavaChangePropagationSpecification]
     }
 
     def getDerivedChangeSequence() {
-        stateBasedStrategyLogger.getChangeSequence()
+        stateBasedStrategyLogger.getChangeSequence
     }
 
     def getModelsDirectory() {
@@ -80,7 +84,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     def getSourceModelPath() {
         modelsDirectory.resolve("Model." + MODEL_FILE_EXTENSION)
     }
-    
+
     def getSourceModel() {
         virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString))
     }
@@ -95,10 +99,9 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 
     def preloadModel(Path path) {
         val originalModel = loadModel(path)
-        resourceAt(sourceModelPath).record [
+        resourceAt(sourceModelPath).propagate [
             contents += EcoreUtil.copy(originalModel.contents.head)
         ]
-        propagate
 
         // preserve original ids
         // this cannot be done in resourceAt as the resource instance is another one than the one in the virtual model
@@ -138,9 +141,9 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         if (!actual.exists) {
             result.put(actual, FileComparisonResult.MISSING_FILE)
         } else if (!expected.isDirectory == actual.isDirectory) {
-            result.put(actual,
-                actual.isDirectory ? FileComparisonResult.DIR_INSTEAD_OF_FILE : FileComparisonResult.
-                    FILE_INSTEAD_OF_DIR)
+            result.put(actual, actual.isDirectory
+                ? FileComparisonResult.DIR_INSTEAD_OF_FILE
+                : FileComparisonResult.FILE_INSTEAD_OF_DIR)
         } else {
             if (expected.isDirectory) {
                 val visitedFiles = new HashSet<File>()
@@ -169,16 +172,16 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         }
         return FileComparisonResult.INCORRECT_FILE
     }
-    
+
     def <T extends EObject> getModifiableInstance(T original) {
         val originalURI = EcoreUtil.getURI(original)
         return originalURI.trimFragment.resourceAt?.getEObject(originalURI.fragment) as T
     }
-    
+
     def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type) {
         return getModifiableCorrespondingObject(original, type, "")
     }
-    
+
     def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type, String tag) {
         val correspondences = correspondenceModel.getCorrespondingEObjects(#[original], tag).flatten.filter(type)
         assertEquals(1, correspondences.size)
