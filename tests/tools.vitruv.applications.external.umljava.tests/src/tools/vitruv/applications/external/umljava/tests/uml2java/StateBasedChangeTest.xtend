@@ -18,6 +18,7 @@ import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
+import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.domains.uml.UmlDomainProvider
 import tools.vitruv.framework.change.description.PropagatedChange
@@ -66,7 +67,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     }
 
     override protected getChangePropagationSpecifications() {
-        return #[new UmlToJavaChangePropagationSpecification]
+        return #[new UmlToJavaChangePropagationSpecification, new JavaToUmlChangePropagationSpecification]
     }
 
     def getDerivedChangeSequence() {
