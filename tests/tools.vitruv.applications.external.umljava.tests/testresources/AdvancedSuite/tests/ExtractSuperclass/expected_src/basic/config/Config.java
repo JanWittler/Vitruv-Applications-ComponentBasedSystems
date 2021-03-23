@@ -29,8 +29,10 @@ public class Config {
 	public static void loadConfig() {
 	}
 	public static boolean isReconfigurable() {
+		return this.reconfigurable;
 	}
 	public static String getEJBs() {
+		return this.ejbs;
 	}
 }
 
