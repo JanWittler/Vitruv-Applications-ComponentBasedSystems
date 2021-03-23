@@ -7,7 +7,6 @@ import java.util.HashMap
 import java.util.HashSet
 import java.util.List
 import java.util.Map
-import org.apache.commons.io.FileUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
@@ -17,6 +16,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.^extension.ExtendWith
 import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
+import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper.ComparisonResult
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
@@ -118,60 +119,44 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
     }
 
-    enum FileComparisonResult {
-        CORRECT,
-        MISSING_FILE,
-        DIR_INSTEAD_OF_FILE,
-        FILE_INSTEAD_OF_DIR,
-        INCORRECT_FILE,
-        FILE_SHOULD_NOT_EXIST
-    }
-
     def assertSourceModelEquals(File expected) {
         assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
     }
 
     def assertFileOrDirectoryEquals(File expected, File actual) {
         val result = internalFileOrDirectoryEqual(expected, actual)
-        val incorrectResults = result.filter[_, value|value != FileComparisonResult.CORRECT]
+        val incorrectResults = result.filter[_, value|value != ComparisonResult.SEMANTICALLY_IDENTICAL]
         assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
     }
 
-    private def Map<File, FileComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
-        val result = new HashMap<File, StateBasedChangeTest.FileComparisonResult>()
-        if (!actual.exists) {
-            result.put(actual, FileComparisonResult.MISSING_FILE)
-        } else if (!expected.isDirectory == actual.isDirectory) {
-            result.put(actual, actual.isDirectory
-                ? FileComparisonResult.DIR_INSTEAD_OF_FILE
-                : FileComparisonResult.FILE_INSTEAD_OF_DIR)
-        } else {
-            if (expected.isDirectory) {
-                val visitedFiles = new HashSet<File>()
-                for (File file : expected.listFiles().filter[f|!f.hidden]) {
-                    val relativize = expected.toPath().relativize(file.toPath())
-                    val fileInOther = actual.toPath().resolve(relativize).toFile()
-                    visitedFiles += fileInOther
-                    val subResult = internalFileOrDirectoryEqual(file, fileInOther)
-                    subResult.forEach[key, value|result.put(key, value)]
+    private def Map<File, ComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
+        val result = new HashMap<File, ComparisonResult>()
+        val comparisonResult = compareFiles(expected, actual)
+        if (comparisonResult !== null) {
+            result.put(actual, comparisonResult)
+        }
+        val visitedFiles = new HashSet<File>()
+        if (expected.isDirectory) {
+            for (File file : expected.listFiles().filter[f|!f.hidden]) {
+                val relativize = expected.toPath().relativize(file.toPath())
+                val fileInOther = actual.toPath().resolve(relativize).toFile()
+                visitedFiles += fileInOther
+                val subResult = internalFileOrDirectoryEqual(file, fileInOther)
+                subResult.forEach[key, value|result.put(key, value)]
+            }
+        }
+        if (actual.isDirectory) {
+            for (File file : actual.listFiles().filter[f|!f.hidden]) {
+                if (!visitedFiles.contains(file)) {
+                    result.put(file, ComparisonResult.FILE_SHOULD_NOT_EXIST)
                 }
-                for (File file : actual.listFiles().filter[f|!f.hidden]) {
-                    if (!visitedFiles.contains(file)) {
-                        result.put(file, FileComparisonResult.FILE_SHOULD_NOT_EXIST)
-                    }
-                }
-            } else {
-                result.put(actual, compareFiles(expected, actual))
             }
         }
         return result
     }
 
     def compareFiles(File expected, File actual) {
-        if (FileUtils.contentEquals(expected, actual)) {
-            return FileComparisonResult.CORRECT
-        }
-        return FileComparisonResult.INCORRECT_FILE
+        return FileComparisonHelper.compareFiles(#[], expected, actual)
     }
 
     def <T extends EObject> getModifiableInstance(T original) {

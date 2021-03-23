@@ -10,11 +10,22 @@ import org.custommonkey.xmlunit.DifferenceListener
 import org.custommonkey.xmlunit.XMLUnit
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
+import org.apache.commons.io.FilenameUtils
 
 import static org.custommonkey.xmlunit.XMLUnit.*
 
-class UMLXMLComparisonHelper {
-    static def compareUMLFiles(File expected, File actual) {
+class UMLXMLFileComparisonHelper implements FileComparisonHelper {
+    /** Accepts files if they all have the file extension "uml". */
+    override canCompareFiles(File[] files) {
+        files.forall[FilenameUtils.getExtension(path) == "uml"]
+    }
+
+    /**
+     * Compares two UML XML files.
+     * The comparison allows the absence of various default values, 
+     * mostly the type attribute when it can be inferred.
+     */
+    override areFilesSemanticallyIdentical(File expected, File actual) {
         val expectedStream = new FileInputStream(expected)
         val expectedSource = new InputSource(new InputStreamReader(expectedStream))
         val actualStream = new FileInputStream(actual)
