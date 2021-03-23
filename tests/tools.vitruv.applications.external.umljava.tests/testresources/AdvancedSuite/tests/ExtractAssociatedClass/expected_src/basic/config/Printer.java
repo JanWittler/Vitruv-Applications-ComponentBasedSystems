@@ -1,13 +1,13 @@
 package basic.config;
 
-import basic.config.Component;
+import basic.config.EJB;
 
 
 public class Printer {
-	void printProvidedInterfaces(Component component) {
+	void printProvidedInterfaces(EJB ejb) {
 		printProvidedInterfaces();
 	}
-	void printRequiredInterfaces(Component component) {
+	void printRequiredInterfaces(EJB ejb) {
 		printRequiredInterfaces();
 	}
 }

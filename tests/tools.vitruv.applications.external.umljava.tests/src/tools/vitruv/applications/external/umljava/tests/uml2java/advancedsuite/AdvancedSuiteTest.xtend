@@ -24,6 +24,7 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
         userInteraction.addNextSingleSelection(0)
         userInteraction.addNextSingleSelection(0)
         userInteraction.addNextSingleSelection(0)
+        userInteraction.addNextSingleSelection(0)
         super.preloadModel(path)
     }
     
@@ -71,8 +72,8 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             statements.add(jStatement)
         ]
 
-        val componentClass = umlClassProvider.apply(#["basic", "config"], "Component")
-        val printRequiredOperation = componentClass.ownedOperations.filter [ name == "printRequiredInterfaces"].head
+        val ejbClass = umlClassProvider.apply(#["basic", "config"], "EJB")
+        val printRequiredOperation = ejbClass.ownedOperations.filter [ name == "printRequiredInterfaces"].head
         getModifiableCorrespondingObject(printRequiredOperation, ClassMethod).propagate [
             val jRecursive = ReferencesFactory.eINSTANCE.createMethodCall
             jRecursive.target = it
@@ -83,7 +84,7 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             statements.add(jStatement)
         ]
 
-        val printProvidedOperation = componentClass.ownedOperations.filter [ name == "printProvidedInterfaces"].head
+        val printProvidedOperation = ejbClass.ownedOperations.filter [ name == "printProvidedInterfaces"].head
         getModifiableCorrespondingObject(printProvidedOperation, ClassMethod).propagate [
             val jRecursive = ReferencesFactory.eINSTANCE.createMethodCall
             jRecursive.target = it
