@@ -12,7 +12,7 @@ public class Example {
 		this.name = name;
 	}
 	public boolean nameEquals(String otherName) {
-		return false;
+		return this.name == otherName;
 	}
 	private int counter;
 	public int getCounter() {

@@ -5,7 +5,7 @@ import java.lang.String;
 
 public class Second {
 	public boolean nameEquals(String otherName) {
-		return false;
+		return this.name == otherName;
 	}
 }
 

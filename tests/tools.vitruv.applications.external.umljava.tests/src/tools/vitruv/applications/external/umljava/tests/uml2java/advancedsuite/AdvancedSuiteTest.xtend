@@ -114,8 +114,8 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             statements.add(jStatement)
         ]
 
-        val getEJBsOperations = configClass.ownedOperations.filter [ name == "getEJBs" ].head
-        getModifiableCorrespondingObject(getEJBsOperations, ClassMethod).propagate [
+        val getEJBsOperation = configClass.ownedOperations.filter [ name == "getEJBs" ].head
+        getModifiableCorrespondingObject(getEJBsOperation, ClassMethod).propagate [
             // return this.ejbs;
             val jStatement = StatementsFactory.eINSTANCE.createReturn
             val jReference = ReferencesFactory.eINSTANCE.createSelfReference
