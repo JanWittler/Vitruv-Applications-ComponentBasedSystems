@@ -7,6 +7,7 @@ import java.util.HashMap
 import java.util.HashSet
 import java.util.List
 import java.util.Map
+import org.apache.commons.io.FilenameUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
@@ -19,9 +20,6 @@ import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingSta
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper.ComparisonResult
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
-import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
-import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
-import tools.vitruv.domains.uml.UmlDomainProvider
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
 import tools.vitruv.framework.util.datatypes.VURI
@@ -34,73 +32,65 @@ import static org.junit.jupiter.api.Assertions.assertEquals
 
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-    public static val INITIAL_MODEL_NAME = "Base"
-    public static val MODEL_FILE_EXTENSION = "uml"
-
-    /** For any test case tagged with this tag, the model preloading will be skipped. */
-    public static val CUSTOM_INITIAL_MODEL_TAG = "StateBasedChangeTest.CustomInitialModel"
-
     protected var Path testProjectFolder
-    val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
-    @Accessors(PUBLIC_GETTER) protected var List<PropagatedChange> propagatedChanges
+    var String modelFileExtension
+    protected val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+    @Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
 
+    /** The <code>StateBasedChangeResolutionStrategy</code> to use. */
     def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
 
+    /**
+     * The path to the model which shall be preloaded.
+     * @param testInfo the info for the test to execute.
+     */
+    def Path initialModelPath(TestInfo testInfo)
+
     @BeforeEach
-    def void patchDomains() {
-        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+    protected def void patchDomains() {
+        changePropagationSpecifications.forEach [ sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger ]
     }
 
     @BeforeEach
-    def setupStrategyLogger() {
+    protected def setupStrategyLogger() {
         this.propagatedChanges = null
         this.stateBasedStrategyLogger.reset()
         this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
     }
 
     @BeforeEach
-    def setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
+    protected def setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
         this.testProjectFolder = testProjectFolder
-
-        if (!testInfo.tags.contains(CUSTOM_INITIAL_MODEL_TAG)) {
-            preloadModel(resourcesDirectory.resolve(INITIAL_MODEL_NAME + "." + MODEL_FILE_EXTENSION))
-        }
-    }
-
-    override protected getChangePropagationSpecifications() {
-        return #[new UmlToJavaChangePropagationSpecification, new JavaToUmlChangePropagationSpecification]
+        preloadModel(initialModelPath(testInfo))
     }
 
     def getDerivedChangeSequence() {
         stateBasedStrategyLogger.getChangeSequence
     }
 
-    def getModelsDirectory() {
-        testProjectFolder.resolve("model")
-    }
-
-    def resourcesDirectory() {
+    protected def resourcesDirectory() {
         Path.of("testresources")
     }
 
-    def getSourceModelPath() {
-        modelsDirectory.resolve("Model." + MODEL_FILE_EXTENSION)
+    protected def getSourceModelPath() {
+        testProjectFolder.resolve("model").resolve("Model." + modelFileExtension)
     }
 
-    def getSourceModel() {
+    protected def getSourceModel() {
         virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString))
     }
 
     def resolveChangedState(Path changedModelPath) {
-        val changedModel = loadModel(changedModelPath)
+        val changedModel = loadExternalModel(changedModelPath)
         val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
         logChanges()
         assertSourceModelEquals(changedModelPath.toFile)
     }
 
-    def preloadModel(Path path) {
-        val originalModel = loadModel(path)
+    protected def preloadModel(Path path) {
+        modelFileExtension = FilenameUtils.getExtension(path.toString)
+        val originalModel = loadExternalModel(path)
         resourceAt(sourceModelPath).propagate [
             contents += EcoreUtil.copy(originalModel.contents.head)
         ]
@@ -114,49 +104,9 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         assertSourceModelEquals(path.toFile)
     }
 
-    def loadModel(Path path) {
+    protected def loadExternalModel(Path path) {
         val resourceSet = new ResourceSetImpl
         return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
-    }
-
-    def assertSourceModelEquals(File expected) {
-        assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
-    }
-
-    def assertFileOrDirectoryEquals(File expected, File actual) {
-        val result = internalFileOrDirectoryEqual(expected, actual)
-        val incorrectResults = result.filter[_, value|value != ComparisonResult.SEMANTICALLY_IDENTICAL]
-        assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
-    }
-
-    private def Map<File, ComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
-        val result = new HashMap<File, ComparisonResult>()
-        val comparisonResult = compareFiles(expected, actual)
-        if (comparisonResult !== null) {
-            result.put(actual, comparisonResult)
-        }
-        val visitedFiles = new HashSet<File>()
-        if (expected.isDirectory) {
-            for (File file : expected.listFiles().filter[f|!f.hidden]) {
-                val relativize = expected.toPath().relativize(file.toPath())
-                val fileInOther = actual.toPath().resolve(relativize).toFile()
-                visitedFiles += fileInOther
-                val subResult = internalFileOrDirectoryEqual(file, fileInOther)
-                subResult.forEach[key, value|result.put(key, value)]
-            }
-        }
-        if (actual.isDirectory) {
-            for (File file : actual.listFiles().filter[f|!f.hidden]) {
-                if (!visitedFiles.contains(file)) {
-                    result.put(file, ComparisonResult.FILE_SHOULD_NOT_EXIST)
-                }
-            }
-        }
-        return result
-    }
-
-    def compareFiles(File expected, File actual) {
-        return FileComparisonHelper.compareFiles(#[], expected, actual)
     }
 
     def <T extends EObject> getModifiableInstance(T original) {
@@ -174,6 +124,46 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         return getModifiableInstance(correspondences.head)
     }
 
+    def assertSourceModelEquals(File expected) {
+        assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
+    }
+
+    def assertFileOrDirectoryEquals(File expected, File actual) {
+        val result = compareFileOrDirectory(expected, actual)
+        val incorrectResults = result.filter[_, value|value != ComparisonResult.SEMANTICALLY_IDENTICAL]
+        assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
+    }
+
+    private def Map<File, ComparisonResult> compareFileOrDirectory(File expected, File actual) {
+        val result = new HashMap<File, ComparisonResult>()
+        val comparisonResult = compareFiles(expected, actual)
+        if (comparisonResult !== null) {
+            result.put(actual, comparisonResult)
+        }
+        val visitedFiles = new HashSet<File>()
+        if (expected.isDirectory) {
+            for (File file : expected.listFiles().filter[f|!f.hidden]) {
+                val relativize = expected.toPath().relativize(file.toPath())
+                val fileInOther = actual.toPath().resolve(relativize).toFile()
+                visitedFiles += fileInOther
+                val subResult = compareFileOrDirectory(file, fileInOther)
+                subResult.forEach[key, value|result.put(key, value)]
+            }
+        }
+        if (actual.isDirectory) {
+            for (File file : actual.listFiles().filter[f|!f.hidden]) {
+                if (!visitedFiles.contains(file)) {
+                    result.put(file, ComparisonResult.FILE_SHOULD_NOT_EXIST)
+                }
+            }
+        }
+        return result
+    }
+
+    def compareFiles(File expected, File actual) {
+        return FileComparisonHelper.compareFiles(#[], expected, actual)
+    }
+
     def serializedChanges() {
         '''propagated changes:
 	«propagatedChanges»''' + "\n" + '''vitruvius changes:
@@ -186,9 +176,5 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val writer = new FileWriter(output.absolutePath)
         writer.write(serializedChanges)
         writer.close
-    }
-
-    final def printChanges() {
-        println(serializedChanges)
     }
 }

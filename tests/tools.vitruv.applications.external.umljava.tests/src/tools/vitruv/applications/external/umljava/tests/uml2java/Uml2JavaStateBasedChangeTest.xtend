@@ -11,8 +11,18 @@ import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelpe
 import tools.vitruv.applications.external.umljava.tests.util.JavaFileComparisonHelper
 import tools.vitruv.applications.external.umljava.tests.util.UMLXMLFileComparisonHelper
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
+import org.junit.jupiter.api.TestInfo
+import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
+import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
+import org.junit.jupiter.api.BeforeEach
+import tools.vitruv.domains.uml.UmlDomainProvider
 
 abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
+
+    override initialModelPath(TestInfo testInfo) {
+        return resourcesDirectory.resolve("Base.uml")
+    }
+
     override preloadModel(Path path) {
         super.preloadModel(path)
 
@@ -21,6 +31,15 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
         enrichJavaModel(path, [n, c|retrieveUMLClass(sourceResource, n, c)])
 
         assertTargetModelEquals(path.parent.resolve("expected_src"))
+    }
+
+    @BeforeEach
+    override patchDomains() {
+        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+    }
+
+    override protected getChangePropagationSpecifications() {
+        return #[new UmlToJavaChangePropagationSpecification, new JavaToUmlChangePropagationSpecification]
     }
 
     def void enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider)

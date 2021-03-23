@@ -4,8 +4,8 @@ import java.nio.file.Path
 import java.util.List
 import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.members.ClassMethod
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 
 /**
@@ -29,11 +29,8 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         testModels("MoveRenamedElement")
     }
 
-    @Tag(CUSTOM_INITIAL_MODEL_TAG)
     @Test
     def testExchangeElements() {
-        preloadModel(resourcesDirectory.resolve("tests/ExchangeElements/Base/Base.uml"))
-
         testModels("ExchangeElements")
     }
 
@@ -46,7 +43,14 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         super.resourcesDirectory.resolve("ModelMatchChallenge")
     }
 
-    override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
+    override initialModelPath(TestInfo testInfo) {
+        if (testInfo.displayName == "testExchangeElements()") {
+            return resourcesDirectory.resolve("tests/ExchangeElements/Base/Base.uml")
+        }
+        return super.initialModelPath(testInfo)
+    }
+
+    override enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
         if (preloadedModelPath.contains(Path.of("ExchangeElements"))) {
             enrichExchangeElementsJavaModel(umlClassProvider)
         } else {
@@ -54,23 +58,23 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         }
     }
 
-    private def enrichDefaultJavaModel((List<String>, String) => Class umlClassProvider) {
+    private def enrichDefaultJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de"], "DomesticAnimal")
-        val umlProperty = umlClass.ownedAttributes.filter [ name == "species" ].head
+        val umlProperty = umlClass.ownedAttributes.filter[name == "species"].head
         getModifiableCorrespondingObject(umlProperty, ClassMethod, "setter").propagate [
             name = "changeSpecies"
         ]
     }
 
-    private def enrichExchangeElementsJavaModel((List<String>, String) => Class umlClassProvider) {
+    private def enrichExchangeElementsJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de", "shop"], "DomesticAnimal")
-        val umlProperty = umlClass.ownedAttributes.filter [ name == "species" ].head
+        val umlProperty = umlClass.ownedAttributes.filter[name == "species"].head
         getModifiableCorrespondingObject(umlProperty, ClassMethod, "setter").propagate [
             name = "changeSpecies"
         ]
 
         val umlClass2 = umlClassProvider.apply(#["de", "core"], "DomesticAnimalNew")
-        val umlProperty2 = umlClass2.ownedAttributes.filter [ name == "species" ].head
+        val umlProperty2 = umlClass2.ownedAttributes.filter[name == "species"].head
         getModifiableCorrespondingObject(umlProperty2, ClassMethod, "setter").propagate [
             name = "adjustSpecies"
         ]
