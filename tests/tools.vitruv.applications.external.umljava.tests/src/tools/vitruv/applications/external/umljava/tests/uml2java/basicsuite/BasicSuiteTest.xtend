@@ -16,67 +16,67 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBa
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
     @Test
     def testAddClass() {
-        testModels("AddClass")
+        testModelInDirectory("AddClass")
     }
 
     @Test
     def testRemoveClass() {
-        testModels("RemoveClass")
+        testModelInDirectory("RemoveClass")
     }
 
     @Test
     def testRenameClass() {
-        testModels("RenameClass")
+        testModelInDirectory("RenameClass")
     }
 
     @Test
     def testMoveClassEasy() {
-        testModels("MoveClassEasy")
+        testModelInDirectory("MoveClassEasy")
     }
 
     @Test
     def testMoveClassHard() {
-        testModels("MoveClassHard")
+        testModelInDirectory("MoveClassHard")
     }
 
     @Test
     def testAddAttribute() {
-        testModels("AddAttribute")
+        testModelInDirectory("AddAttribute")
     }
 
     @Test
     def testRemoveAttribute() {
-        testModels("RemoveAttribute")
+        testModelInDirectory("RemoveAttribute")
     }
 
     @Test
     def testRenameAttribute() {
-        testModels("RenameAttribute")
+        testModelInDirectory("RenameAttribute")
     }
 
     @Test
     def testMoveAttribute() {
-        testModels("MoveAttribute")
+        testModelInDirectory("MoveAttribute")
     }
 
     @Test
     def testAddMethod() {
-        testModels("AddMethod")
+        testModelInDirectory("AddMethod")
     }
 
     @Test
     def testRemoveMethod() {
-        testModels("RemoveMethod")
+        testModelInDirectory("RemoveMethod")
     }
 
     @Test
     def testRenameMethod() {
-        testModels("RenameMethod")
+        testModelInDirectory("RenameMethod")
     }
 
     @Test
     def testMoveMethod() {
-        testModels("MoveMethod")
+        testModelInDirectory("MoveMethod")
     }
 
     override resourcesDirectory() {

@@ -32,32 +32,32 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
 
     @Test
     def void changeMethodSignature() {
-        testModels("ChangeMethodSignature")
+        testModelInDirectory("ChangeMethodSignature")
     }
 
     @Test
     def void testCollapseHierarchy() {
-        testModels("CollapseHierarchy")
+        testModelInDirectory("CollapseHierarchy")
     }
 
     @Test
     def void testExtractSuperclass() {
-        testModels("ExtractSuperclass")
+        testModelInDirectory("ExtractSuperclass")
     }
 
     @Test
     def void testInlineClass() {
-        testModels("InlineClass")
+        testModelInDirectory("InlineClass")
     }
 
     @Test
     def void testExtractAssociatedClass() {
-        testModels("ExtractAssociatedClass")
+        testModelInDirectory("ExtractAssociatedClass")
     }
 
     @Test
     def void testRemoveAssociatedClass() {
-        testModels("RemoveAssociatedClass")
+        testModelInDirectory("RemoveAssociatedClass")
     }
 
     override enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 abstract class ThesisSystemExampleTest extends Uml2JavaStateBasedChangeTest {
     @Test
     def void testThesisSystemExample() {
-        testModels("Test1")
+        testModelInDirectory("Test1")
     }
 
     override resourcesDirectory() {

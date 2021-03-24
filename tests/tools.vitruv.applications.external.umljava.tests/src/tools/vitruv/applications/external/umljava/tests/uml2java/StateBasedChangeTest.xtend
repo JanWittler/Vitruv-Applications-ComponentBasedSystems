@@ -30,6 +30,14 @@ import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
 
+/**
+ * The basic test class for state based change propagation tests.
+ * Before each tests, preloads a source model and verifies its correctness, and generates the corresponding target model.
+ * Logs the propagated and derived change sequence to a file in the test directory.
+ * Provides support for directory comparison and accessing modifiable corresponding objects of source model objects.
+ * 
+ * @author Jan Wittler
+ */
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     protected var Path testProjectFolder
@@ -48,14 +56,16 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 
     @BeforeEach
     protected def void patchDomains() {
-        changePropagationSpecifications.forEach [ sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger ]
+        changePropagationSpecifications.forEach [
+            sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+        ]
     }
 
     @BeforeEach
-    protected def setupStrategyLogger() {
+    def setupStrategyLogger() {
         this.propagatedChanges = null
         this.stateBasedStrategyLogger.reset()
-        this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
+        this.stateBasedStrategyLogger.strategy = stateBasedResolutionStrategy
     }
 
     @BeforeEach
@@ -68,6 +78,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         stateBasedStrategyLogger.getChangeSequence
     }
 
+    /** The directory where all test resources are. By defaults returns <code>/testresources</code>. */
     protected def resourcesDirectory() {
         Path.of("testresources")
     }
@@ -80,6 +91,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString))
     }
 
+    /**
+     * Resolves a changed model with the current VSUM.
+     * Logs the performed changes to file and validates the correctness of the source model after propagation.
+     * @param changedModelPath The path of the changed model.
+     */
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
         val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
@@ -109,29 +125,62 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
     }
 
-    def <T extends EObject> getModifiableInstance(T original) {
-        val originalURI = EcoreUtil.getURI(original)
-        return originalURI.trimFragment.resourceAt?.getEObject(originalURI.fragment) as T
-    }
-
+    /**
+     * Returns the object corresponding the given object with the requested type and tag "".
+     * Asserts that there is exactly one corresponding object of the requested type.
+     * @param original The object to which to find correspondences.
+     * @param type The class type of the corresponding object.
+     * @return Returns the corresponding object.
+     */
     def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type) {
         return getModifiableCorrespondingObject(original, type, "")
     }
 
+    /**
+     * Returns the object corresponding the given object with the requested type and tag.
+     * Asserts that there is exactly one corresponding object of the requested type.
+     * @param original The object to which to find correspondences.
+     * @param type The class type of the corresponding object.
+     * @param tag The tag with which the correspondence should be tagged.
+     * @return Returns the corresponding object.
+     */
     def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type, String tag) {
         val correspondences = correspondenceModel.getCorrespondingEObjects(#[original], tag).flatten.filter(type)
         assertEquals(1, correspondences.size)
         return getModifiableInstance(correspondences.head)
     }
 
+    private def <T extends EObject> getModifiableInstance(T original) {
+        val originalURI = EcoreUtil.getURI(original)
+        return originalURI.trimFragment.resourceAt?.getEObject(originalURI.fragment) as T
+    }
+
     def assertSourceModelEquals(File expected) {
         assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
     }
 
+    /**
+     * Asserts that the two provided file objects contain equal content.
+     * If directories are provided, a deep comparison of the directories content is performed.
+     * If files are provided, they are compared for equality. 
+     * To compare files @{link #compareFiles(File,File)} is used.
+     * @param The file or directory expected.
+     * @param The file or directory actually present.
+     */
     def assertFileOrDirectoryEquals(File expected, File actual) {
         val result = compareFileOrDirectory(expected, actual)
         val incorrectResults = result.filter[_, value|value != ComparisonResult.SEMANTICALLY_IDENTICAL]
         assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
+    }
+
+    /**
+     * Compares two files for equality. Uses @{link FileComparisonHelper} to compare files.
+     * @param expected The expected file.
+     * @param actual The actual file.
+     * @return Returns <code>true</code> if both files are semantically identical, otherwise <code>false</code>.
+     */
+    def compareFiles(File expected, File actual) {
+        return FileComparisonHelper.compareFiles(#[], expected, actual)
     }
 
     private def Map<File, ComparisonResult> compareFileOrDirectory(File expected, File actual) {
@@ -158,10 +207,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
             }
         }
         return result
-    }
-
-    def compareFiles(File expected, File actual) {
-        return FileComparisonHelper.compareFiles(#[], expected, actual)
     }
 
     def serializedChanges() {

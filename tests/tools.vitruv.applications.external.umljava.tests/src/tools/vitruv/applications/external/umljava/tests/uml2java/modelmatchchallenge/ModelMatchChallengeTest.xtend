@@ -16,27 +16,27 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBa
 abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
     @Test
     def testMove() {
-        testModels("MoveElement")
+        testModelInDirectory("MoveElement")
     }
 
     @Test
     def testRename() {
-        testModels("RenameElement")
+        testModelInDirectory("RenameElement")
     }
 
     @Test
     def testMoveRenamed() {
-        testModels("MoveRenamedElement")
+        testModelInDirectory("MoveRenamedElement")
     }
 
     @Test
     def testExchangeElements() {
-        testModels("ExchangeElements")
+        testModelInDirectory("ExchangeElements")
     }
 
     @Test
     def testUpdateReferenceTarget() {
-        testModels("UpdateReferenceTarget")
+        testModelInDirectory("UpdateReferenceTarget")
     }
 
     override resourcesDirectory() {
