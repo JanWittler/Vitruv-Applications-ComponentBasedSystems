@@ -7,6 +7,7 @@ import org.eclipse.emf.compare.rcp.EMFCompareRCPPlugin
 import org.eclipse.emf.compare.scope.DefaultComparisonScope
 import org.eclipse.emf.compare.utils.UseIdentifiers
 
+/** A difference provider using the EMF Compare similarity measure. */
 class SimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
     override getDifferences(Notifier newState, Notifier oldState) {
         val scope = new DefaultComparisonScope(newState, oldState, null)

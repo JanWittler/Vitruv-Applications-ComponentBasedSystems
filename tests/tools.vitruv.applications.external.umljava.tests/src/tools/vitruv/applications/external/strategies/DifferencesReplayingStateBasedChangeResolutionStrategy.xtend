@@ -19,10 +19,15 @@ import tools.vitruv.framework.uuid.UuidResolver
 
 import static tools.vitruv.framework.uuid.UuidGeneratorAndResolverFactory.createUuidGeneratorAndResolver
 
+/** A change resolution strategy that uses a @{link StateBasedDifferencesProvider} to compute the differences and replays them to convert them to a change sequence. */
 class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
     val StateBasedDifferencesProvider differencesProvider
     val VitruviusChangeFactory changeFactory
 
+    /**
+     * Initializes the strategy using the given differences provider.
+     * @param differencesProvider The differences provider used to compute the differences.
+     */
     new(StateBasedDifferencesProvider differencesProvider) {
         this.changeFactory = VitruviusChangeFactory.instance
         this.differencesProvider = differencesProvider

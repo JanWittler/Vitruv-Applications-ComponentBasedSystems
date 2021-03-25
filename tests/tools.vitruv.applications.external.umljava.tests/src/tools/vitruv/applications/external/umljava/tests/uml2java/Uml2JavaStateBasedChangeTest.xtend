@@ -17,6 +17,12 @@ import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import org.junit.jupiter.api.BeforeEach
 import tools.vitruv.domains.uml.UmlDomainProvider
 
+/**
+ * The basic test class for UML to Java state based change tests.
+ * Automatically verifies the correct of the target model after preloading the source model and propagating changes.
+ * 
+ * @author Jan Wittler
+ */
 abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
     override initialModelPath(TestInfo testInfo) {
         return resourcesDirectory.resolve("Base.uml")

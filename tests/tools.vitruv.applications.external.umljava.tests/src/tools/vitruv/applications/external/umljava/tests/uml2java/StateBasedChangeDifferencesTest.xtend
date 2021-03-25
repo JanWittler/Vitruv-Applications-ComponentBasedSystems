@@ -6,6 +6,11 @@ import tools.vitruv.applications.external.strategies.StateBasedDifferencesProvid
 import tools.vitruv.applications.external.strategies.TraceableStateBasedDifferencesProvider
 import tools.vitruv.applications.external.strategies.DifferencesReplayingStateBasedChangeResolutionStrategy
 
+/**
+ * Extends the basic test class with automatic handling for setting up and handling the differences provider.
+ * 
+ * @author Jan Wittler
+ */
 abstract class StateBasedChangeDifferencesTest extends StateBasedChangeTest {
     protected val traceableDifferencesProvider = new TraceableStateBasedDifferencesProvider()
     val strategy = new DifferencesReplayingStateBasedChangeResolutionStrategy(traceableDifferencesProvider)
