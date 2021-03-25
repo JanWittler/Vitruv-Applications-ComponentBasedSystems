@@ -6,7 +6,7 @@ import tools.vitruv.framework.uuid.UuidResolver
 import tools.vitruv.framework.change.description.VitruviusChange
 import org.eclipse.xtend.lib.annotations.Accessors
 
-class DerivedSequenceProvidingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
+class TraceableStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
     @Accessors(PUBLIC_SETTER, PUBLIC_GETTER) StateBasedChangeResolutionStrategy strategy
     VitruviusChange changeSequence
 

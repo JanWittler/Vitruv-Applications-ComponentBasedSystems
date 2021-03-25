@@ -7,8 +7,8 @@ import org.eclipse.emf.compare.rcp.EMFCompareRCPPlugin
 import org.eclipse.emf.compare.scope.DefaultComparisonScope
 import org.eclipse.emf.compare.utils.UseIdentifiers
 
-class BasicSimilarityBasedStateBasedChangeDiffProvider implements StateBasedChangeDiffProvider {
-    override getChangeSequences(Notifier newState, Notifier oldState) {
+class SimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
+    override getDifferences(Notifier newState, Notifier oldState) {
         val scope = new DefaultComparisonScope(newState, oldState, null)
 
         val registry = EMFCompareRCPPlugin.getDefault.getMatchEngineFactoryRegistry

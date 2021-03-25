@@ -19,13 +19,13 @@ import tools.vitruv.framework.uuid.UuidResolver
 
 import static tools.vitruv.framework.uuid.UuidGeneratorAndResolverFactory.createUuidGeneratorAndResolver
 
-class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
-    val StateBasedChangeDiffProvider diffProvider
+class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
+    val StateBasedDifferencesProvider differencesProvider
     val VitruviusChangeFactory changeFactory
 
-    new(StateBasedChangeDiffProvider diffProvider) {
+    new(StateBasedDifferencesProvider differencesProvider) {
         this.changeFactory = VitruviusChangeFactory.instance
-        this.diffProvider = diffProvider
+        this.differencesProvider = differencesProvider
     }
 
     override getChangeSequences(Resource newState, Resource currentState, UuidResolver resolver) {
@@ -45,19 +45,18 @@ class DiffReplayingStateBasedChangeResolutionStrategy implements StateBasedChang
         // Create change sequences:
         val diffs = compareStates(newState, currentStateCopy)
         val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)
+        //TODO: copying the IDs *again* should not be neccessary
+        ResourceUtil.copyIDs(newState, currentStateCopy)
         currentStateCopy.save(emptyMap)
         return changeFactory.createCompositeChange(vitruvDiffs)
     }
 
-    /**
-     * Compares states using EMFCompare and returns a list of all differences.
-     */
     private def List<Diff> compareStates(Notifier newState, Notifier currentState) {
-        return diffProvider.getChangeSequences(newState, currentState)
+        return differencesProvider.getDifferences(newState, currentState)
     }
 
     /**
-     * Replays a list of of EMFCompare differences and records the changes to receive Vitruv change sequences. 
+     * Replays a list of of differences and records the changes to receive Vitruv change sequences. 
      */
     private def List<? extends TransactionalChange> replayChanges(List<Diff> changesToReplay, Notifier currentState,
         UuidGeneratorAndResolver resolver) {

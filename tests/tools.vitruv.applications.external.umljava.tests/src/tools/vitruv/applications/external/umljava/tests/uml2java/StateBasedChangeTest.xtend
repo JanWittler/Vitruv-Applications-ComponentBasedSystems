@@ -16,7 +16,7 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.^extension.ExtendWith
-import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.strategies.TraceableStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper.ComparisonResult
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     protected var Path testProjectFolder
     var String modelFileExtension
-    protected val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+    protected val traceableStateBasedStrategy = new TraceableStateBasedChangeResolutionStrategy
     @Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
 
     /** The <code>StateBasedChangeResolutionStrategy</code> to use. */
@@ -57,15 +57,15 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     @BeforeEach
     protected def void patchDomains() {
         changePropagationSpecifications.forEach [
-            sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+            sourceDomain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
         ]
     }
 
     @BeforeEach
     def setupStrategyLogger() {
         this.propagatedChanges = null
-        this.stateBasedStrategyLogger.reset()
-        this.stateBasedStrategyLogger.strategy = stateBasedResolutionStrategy
+        this.traceableStateBasedStrategy.reset()
+        this.traceableStateBasedStrategy.strategy = stateBasedResolutionStrategy
     }
 
     @BeforeEach
@@ -75,7 +75,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     }
 
     def getDerivedChangeSequence() {
-        stateBasedStrategyLogger.getChangeSequence
+        traceableStateBasedStrategy.getChangeSequence
     }
 
     /** The directory where all test resources are. By defaults returns <code>/testresources</code>. */

@@ -17,7 +17,7 @@ import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import org.junit.jupiter.api.BeforeEach
 import tools.vitruv.domains.uml.UmlDomainProvider
 
-abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
+abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
     override initialModelPath(TestInfo testInfo) {
         return resourcesDirectory.resolve("Base.uml")
     }
@@ -34,7 +34,7 @@ abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChang
 
     @BeforeEach
     override patchDomains() {
-        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
+        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
     }
 
     override protected getChangePropagationSpecifications() {
