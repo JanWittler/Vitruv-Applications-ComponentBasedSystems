@@ -63,15 +63,15 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
 
     @BeforeEach
     def setupStrategyLogger() {
-        this.propagatedChanges = null
-        this.traceableStateBasedStrategy.reset()
         this.traceableStateBasedStrategy.strategy = stateBasedResolutionStrategy
     }
 
     @BeforeEach
-    protected def setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
+    protected def void setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
         this.testProjectFolder = testProjectFolder
         preloadModel(initialModelPath(testInfo))
+        this.traceableStateBasedStrategy.reset()
+        this.propagatedChanges = null
     }
 
     def getDerivedChangeSequence() {

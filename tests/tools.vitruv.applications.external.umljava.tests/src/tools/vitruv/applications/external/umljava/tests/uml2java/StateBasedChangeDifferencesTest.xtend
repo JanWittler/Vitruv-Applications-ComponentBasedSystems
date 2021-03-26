@@ -1,10 +1,12 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
-import tools.vitruv.applications.external.umljava.tests.uml2java.StateBasedChangeTest
+import java.nio.file.Path
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
+import tools.vitruv.applications.external.strategies.DifferencesReplayingStateBasedChangeResolutionStrategy
 import tools.vitruv.applications.external.strategies.StateBasedDifferencesProvider
 import tools.vitruv.applications.external.strategies.TraceableStateBasedDifferencesProvider
-import tools.vitruv.applications.external.strategies.DifferencesReplayingStateBasedChangeResolutionStrategy
+import tools.vitruv.testutils.TestProject
 
 /**
  * Extends the basic test class with automatic handling for setting up and handling the differences provider.
@@ -21,8 +23,13 @@ abstract class StateBasedChangeDifferencesTest extends StateBasedChangeTest {
 
     @BeforeEach
     def void setupDifferencesProvider() {
-        traceableDifferencesProvider.reset()
         traceableDifferencesProvider.differencesProvider = differencesProvider
+    }
+
+    @BeforeEach
+    protected override setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
+        super.setup(testProjectFolder, testInfo)
+        traceableDifferencesProvider.reset()
     }
 
     def getDerivedDifferences() {
