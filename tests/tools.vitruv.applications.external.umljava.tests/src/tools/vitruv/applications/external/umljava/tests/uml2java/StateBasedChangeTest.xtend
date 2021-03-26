@@ -22,7 +22,6 @@ import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelpe
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
-import tools.vitruv.framework.util.datatypes.VURI
 import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
@@ -88,7 +87,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     }
 
     protected def getSourceModel() {
-        virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString))
+        virtualModel.getModelInstance(sourceModelPath.uri)
     }
 
     /**
@@ -98,9 +97,16 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
      */
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
-        val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
+        val sourceModelURI = sourceModelPath.uri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
         logChanges()
+        
+        // preserve original ids
+        // this cannot be done in resourceAt as the resource instance is another one than the one in the virtual model
+        val model = sourceModel.resource
+        ResourceUtil.copyIDs(changedModel, model)
+        model.save(emptyMap)
+        
         assertSourceModelEquals(changedModelPath.toFile)
     }
 
@@ -145,7 +151,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
      * @return Returns the corresponding object.
      */
     def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type, String tag) {
-        val correspondences = correspondenceModel.getCorrespondingEObjects(#[original], tag).flatten.filter(type)
+        val correspondences = getCorrespondingEObjects(original, type, tag)
         assertEquals(1, correspondences.size)
         return getModifiableInstance(correspondences.head)
     }

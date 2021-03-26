@@ -12,8 +12,8 @@ class TraceableStateBasedChangeResolutionStrategy implements StateBasedChangeRes
     @Accessors(PUBLIC_SETTER, PUBLIC_GETTER) StateBasedChangeResolutionStrategy strategy
     @Accessors(PUBLIC_GETTER) VitruviusChange changeSequence
 
-    override getChangeSequences(Resource newState, Resource currentState, UuidResolver resolver) {
-        val changeSequence = strategy?.getChangeSequences(newState, currentState, resolver)
+    override getChangeSequenceBetween(Resource newState, Resource currentState, UuidResolver resolver) {
+        val changeSequence = strategy?.getChangeSequenceBetween(newState, currentState, resolver)
         this.changeSequence = changeSequence
         return changeSequence
     }
@@ -21,4 +21,17 @@ class TraceableStateBasedChangeResolutionStrategy implements StateBasedChangeRes
     def reset() {
         changeSequence = null
     }
+				
+	override getChangeSequenceForCreated(Resource newState, UuidResolver resolver) {
+		val changeSequence = strategy?.getChangeSequenceForCreated(newState, resolver)
+		this.changeSequence = changeSequence
+		return changeSequence
+	}
+				
+	override getChangeSequenceForDeleted(Resource oldState, UuidResolver resolver) {
+		val changeSequence = strategy?.getChangeSequenceForDeleted(oldState, resolver)
+		this.changeSequence = changeSequence
+		return changeSequence
+	}
+				
 }

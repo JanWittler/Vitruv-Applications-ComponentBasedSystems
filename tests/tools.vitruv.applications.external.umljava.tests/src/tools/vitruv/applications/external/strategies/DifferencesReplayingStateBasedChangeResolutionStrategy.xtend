@@ -33,7 +33,7 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
         this.differencesProvider = differencesProvider
     }
 
-    override getChangeSequences(Resource newState, Resource currentState, UuidResolver resolver) {
+    override getChangeSequenceBetween(Resource newState, Resource currentState, UuidResolver resolver) {
         return resolveChangeSequences(newState, currentState, resolver)
     }
 
@@ -50,8 +50,6 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
         // Create change sequences:
         val diffs = compareStates(newState, currentStateCopy)
         val vitruvDiffs = replayChanges(diffs, currentStateCopy, uuidGeneratorAndResolver)
-        //TODO: copying the IDs *again* should not be neccessary
-        ResourceUtil.copyIDs(newState, currentStateCopy)
         currentStateCopy.save(emptyMap)
         return changeFactory.createCompositeChange(vitruvDiffs)
     }
@@ -78,4 +76,13 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
             return changeRecorder.changes
         }
     }
+				
+	override getChangeSequenceForCreated(Resource newState, UuidResolver resolver) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+				
+	override getChangeSequenceForDeleted(Resource oldState, UuidResolver resolver) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+				
 }
