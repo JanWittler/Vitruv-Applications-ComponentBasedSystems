@@ -102,7 +102,7 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         logChanges()
         
         // preserve original ids
-        // this cannot be done in resourceAt as the resource instance is another one than the one in the virtual model
+        // should be done by the change propagation
         val model = sourceModel.resource
         ResourceUtil.copyIDs(changedModel, model)
         model.save(emptyMap)

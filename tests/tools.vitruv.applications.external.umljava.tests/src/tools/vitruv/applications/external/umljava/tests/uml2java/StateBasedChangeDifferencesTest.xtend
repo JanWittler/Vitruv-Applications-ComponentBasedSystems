@@ -7,6 +7,7 @@ import tools.vitruv.applications.external.strategies.DifferencesReplayingStateBa
 import tools.vitruv.applications.external.strategies.StateBasedDifferencesProvider
 import tools.vitruv.applications.external.strategies.TraceableStateBasedDifferencesProvider
 import tools.vitruv.testutils.TestProject
+import tools.vitruv.domains.uml.UmlDomainProvider
 
 /**
  * Extends the basic test class with automatic handling for setting up and handling the differences provider.
@@ -15,7 +16,7 @@ import tools.vitruv.testutils.TestProject
  */
 abstract class StateBasedChangeDifferencesTest extends StateBasedChangeTest {
     protected val traceableDifferencesProvider = new TraceableStateBasedDifferencesProvider()
-    val strategy = new DifferencesReplayingStateBasedChangeResolutionStrategy(traceableDifferencesProvider)
+    val strategy = new DifferencesReplayingStateBasedChangeResolutionStrategy(traceableDifferencesProvider, #{new UmlDomainProvider().domain})
 
     override getStateBasedResolutionStrategy() { return strategy }
 
