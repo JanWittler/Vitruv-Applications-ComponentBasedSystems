@@ -8,9 +8,6 @@ public class Example {
 	public String getName() {
 		return this.name;
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
 	public boolean nameNotEquals(String otherName) {
 		return this.name == otherName;
 	}

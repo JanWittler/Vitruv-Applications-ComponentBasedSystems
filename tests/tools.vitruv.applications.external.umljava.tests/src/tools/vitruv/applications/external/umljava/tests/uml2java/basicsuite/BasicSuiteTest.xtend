@@ -2,7 +2,9 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
 import java.nio.file.Path
 import java.util.List
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.uml2.uml.Class
+import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.emftext.language.java.expressions.ExpressionsFactory
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
@@ -85,11 +87,14 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 
     override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["com.example.first"], "Example")
-        val umlOperation = umlClass.ownedOperations.filter [name == "nameEquals" ].head
-        getModifiableCorrespondingObject(umlOperation, ClassMethod).propagate [
+        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+            val setName = methods.filter [ name == "setName" ].head
+            EcoreUtil.delete(setName)
+
+            val method = methods.filter(ClassMethod).filter [ name == "nameEquals"].head
             // return this.name == otherName;
             val jParamRef = ReferencesFactory.eINSTANCE.createIdentifierReference
-            jParamRef.target = parameters.head
+            jParamRef.target = method.parameters.head
 
             val selfReference = ReferencesFactory.eINSTANCE.createSelfReference
             selfReference.self = LiteralsFactory.eINSTANCE.createThis
@@ -105,7 +110,7 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
 
             val jStatement = StatementsFactory.eINSTANCE.createReturn
             jStatement.returnValue = jComparison
-            statements.add(jStatement)
+            method.statements.add(jStatement)
         ]
     }
 }

@@ -8,9 +8,6 @@ public class Renamed {
 	public String getName() {
 		return this.name;
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
 	public boolean nameEquals(String otherName) {
 		return this.name == otherName;
 	}

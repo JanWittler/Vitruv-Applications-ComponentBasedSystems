@@ -100,13 +100,13 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val sourceModelURI = sourceModelPath.uri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
         logChanges()
-        
+
         // preserve original ids
         // should be done by the change propagation
         val model = sourceModel.resource
         ResourceUtil.copyIDs(changedModel, model)
         model.save(emptyMap)
-        
+
         assertSourceModelEquals(changedModelPath.toFile)
     }
 
