@@ -8,14 +8,11 @@ public class DomesticAnimalNew {
 	public String getNickname() {
 		return this.nickname;
 	}
-	public void setNickname(String nickname) {
-		this.nickname = nickname;
-	}
 	public String species;
 	public String getSpecies() {
 		return this.species;
 	}
-	public void adjustSpecies(String species) {
+	public void setSpecies(String species) {
 		this.species = species;
 	}
 }

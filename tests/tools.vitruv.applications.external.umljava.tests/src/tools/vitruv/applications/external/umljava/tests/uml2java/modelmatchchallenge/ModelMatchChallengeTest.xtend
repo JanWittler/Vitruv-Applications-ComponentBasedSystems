@@ -2,8 +2,9 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchal
 
 import java.nio.file.Path
 import java.util.List
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.uml2.uml.Class
-import org.emftext.language.java.members.ClassMethod
+import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
@@ -60,23 +61,23 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
 
     private def enrichDefaultJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de"], "DomesticAnimal")
-        val umlProperty = umlClass.ownedAttributes.filter[name == "species"].head
-        getModifiableCorrespondingObject(umlProperty, ClassMethod, "setter").propagate [
-            name = "changeSpecies"
+        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+            val speciesSetter = methods.filter [name == "setSpecies" ].head
+            EcoreUtil.delete(speciesSetter)
         ]
     }
 
     private def enrichExchangeElementsJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de", "shop"], "DomesticAnimal")
-        val umlProperty = umlClass.ownedAttributes.filter[name == "species"].head
-        getModifiableCorrespondingObject(umlProperty, ClassMethod, "setter").propagate [
-            name = "changeSpecies"
+        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+            val speciesSetter = methods.filter [ name == "setSpecies"].head
+            EcoreUtil.delete(speciesSetter)
         ]
 
         val umlClass2 = umlClassProvider.apply(#["de", "core"], "DomesticAnimalNew")
-        val umlProperty2 = umlClass2.ownedAttributes.filter[name == "species"].head
-        getModifiableCorrespondingObject(umlProperty2, ClassMethod, "setter").propagate [
-            name = "adjustSpecies"
+        getModifiableCorrespondingObject(umlClass2, ConcreteClassifier).propagate [
+            val nicknameSetter = methods.filter [name == "setNickname" ].head
+            EcoreUtil.delete(nicknameSetter)
         ]
     }
 }
