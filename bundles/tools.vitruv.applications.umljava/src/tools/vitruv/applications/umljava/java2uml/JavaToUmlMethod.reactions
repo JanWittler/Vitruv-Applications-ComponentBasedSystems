@@ -6,6 +6,7 @@ import org.emftext.language.java.modifiers.Private
 import org.emftext.language.java.modifiers.Protected
 import org.emftext.language.java.modifiers.Public
 import org.eclipse.uml2.uml.OperationOwner
+import tools.vitruv.applications.umljava.util.UmlJavaCorrespondenceTag
 
 import static tools.vitruv.applications.umljava.util.CommonUtil.showMessage
 import static tools.vitruv.applications.util.temporary.java.JavaModifierUtil.*
@@ -35,6 +36,8 @@ routine createOrFindUmlClassMethod(java::ClassMethod jMethod, java::ConcreteClas
         val uClassifier = retrieve uml::Classifier corresponding to jClassifier
             with uClassifier instanceof OperationOwner
         require absence of uml::Operation corresponding to jMethod
+        require absence of uml::Property corresponding to jMethod tagged with UmlJavaCorrespondenceTag.GETTER
+        require absence of uml::Property corresponding to jMethod tagged with UmlJavaCorrespondenceTag.SETTER
     }
     action {
         call {
@@ -138,15 +141,28 @@ routine createUmlConstructor(java::Constructor jConstructor, uml::Class uClassif
 
 reaction JavaMemberDeleted {
     after element java::Member deleted and removed from java::ConcreteClassifier[members]
-    call deleteUmlMethod(oldValue)
+    call {
+        deleteUmlMethod(oldValue)
+        deleteAccessorCorrespondence(oldValue, UmlJavaCorrespondenceTag.GETTER)
+        deleteAccessorCorrespondence(oldValue, UmlJavaCorrespondenceTag.SETTER)
+    }
 }
 
 routine deleteUmlMethod(java::Member jMem) {
     match {
-        val uMem = retrieve uml::NamedElement corresponding to jMem
+        val uMem = retrieve uml::NamedElement corresponding to jMem tagged with ""
     }
     action {
         delete uMem
+    }
+}
+
+routine deleteAccessorCorrespondence(java::Member jMember, String tag) {
+    match {
+        val uProperty = retrieve uml::Property corresponding to jMember tagged with tag
+    }
+    action {
+        remove correspondence between uProperty and jMember tagged with tag
     }
 }
 
