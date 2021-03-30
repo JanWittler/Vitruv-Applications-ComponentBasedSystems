@@ -8,9 +8,6 @@ public class Department {
 	public String getId() {
 		return this.id;
 	}
-	public void setId(String id) {
-		this.id = id;
-	}
 	public String name;
 	public String getName() {
 		return this.name;

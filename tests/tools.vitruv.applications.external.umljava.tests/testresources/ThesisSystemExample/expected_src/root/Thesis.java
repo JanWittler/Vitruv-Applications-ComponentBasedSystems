@@ -8,9 +8,6 @@ public class Thesis {
 	public int getId() {
 		return this.id;
 	}
-	public void setId(int id) {
-		this.id = id;
-	}
 	public String title;
 	public String getTitle() {
 		return this.title;
@@ -35,9 +32,6 @@ public class Thesis {
 	public int grade;
 	public int getGrade() {
 		return this.grade;
-	}
-	public void setGrade(int grade) {
-		this.grade = grade;
 	}
 	public String topic;
 	public String getTopic() {
