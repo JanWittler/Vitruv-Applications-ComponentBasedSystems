@@ -14,6 +14,7 @@ import org.emftext.language.java.references.ReferencesFactory
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
+import org.emftext.language.java.classifiers.ConcreteClassifier
 
 abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
     override resourcesDirectory() {
@@ -128,8 +129,11 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
         ]
 
         val currentUserClass = umlClassProvider.apply(#["basic", "data"], "CurrentUser")
-        val currentUserConstructor = currentUserClass.ownedOperations.filter [ name == "CurrentUser" ].head
-        getModifiableCorrespondingObject(currentUserConstructor, Constructor).propagate [ constructor |
+        getModifiableCorrespondingObject(currentUserClass, ConcreteClassifier).propagate [
+            val setters = methods.filter [ name.startsWith("set") ]
+            setters.forEach [ EcoreUtil.delete(it) ]
+
+            val constructor = constructors.head
             // this.<paramName> = <paramName>;
             constructor.parameters.forEach [ parameter |
                 val jParamRef = ReferencesFactory.eINSTANCE.createIdentifierReference
