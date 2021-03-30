@@ -17,9 +17,6 @@ public class RequiredInterface {
 	public ArrayList<Method>getRequiredMethods() {
 		return this.requiredMethods;
 	}
-	public void setRequiredMethods(ArrayList<Method>requiredMethods) {
-		this.requiredMethods = requiredMethods;
-	}
 }
 
 

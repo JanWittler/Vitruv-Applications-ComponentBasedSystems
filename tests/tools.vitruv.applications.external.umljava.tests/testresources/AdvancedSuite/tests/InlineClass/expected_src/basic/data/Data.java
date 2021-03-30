@@ -12,9 +12,6 @@ public class Data extends AbstractData {
 	public String getEncoding() {
 		return this.encoding;
 	}
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
-	}
 }
 
 

@@ -17,9 +17,6 @@ public class ProvidedInterface {
 	public ArrayList<Method>getProvidedMethods() {
 		return this.providedMethods;
 	}
-	public void setProvidedMethods(ArrayList<Method>providedMethods) {
-		this.providedMethods = providedMethods;
-	}
 }
 
 

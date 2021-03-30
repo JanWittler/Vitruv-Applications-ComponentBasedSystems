@@ -8,9 +8,6 @@ public class LegacyData {
 	public RequiredInterface getRequiredInterface() {
 		return this.requiredInterface;
 	}
-	public void setRequiredInterface(RequiredInterface requiredInterface) {
-		this.requiredInterface = requiredInterface;
-	}
 }
 
 

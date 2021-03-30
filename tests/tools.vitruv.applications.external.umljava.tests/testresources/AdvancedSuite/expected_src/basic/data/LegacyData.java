@@ -9,9 +9,6 @@ public class LegacyData extends AbstractData {
 	public RequiredInterface getRequiredInterface() {
 		return this.requiredInterface;
 	}
-	public void setRequiredInterface(RequiredInterface requiredInterface) {
-		this.requiredInterface = requiredInterface;
-	}
 }
 
 

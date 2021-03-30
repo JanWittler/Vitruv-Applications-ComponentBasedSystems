@@ -17,9 +17,6 @@ public abstract class Interface {
 	public ArrayList<Method>getMethods() {
 		return this.methods;
 	}
-	public void setMethods(ArrayList<Method>methods) {
-		this.methods = methods;
-	}
 }
 
 
