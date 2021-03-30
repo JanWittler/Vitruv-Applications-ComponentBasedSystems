@@ -1,9 +1,7 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.advancedsuite
 
 import java.nio.file.Path
-import java.util.List
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.emftext.language.java.expressions.ExpressionsFactory
 import org.emftext.language.java.literals.LiteralsFactory
@@ -60,9 +58,8 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
         testModelInDirectory("RemoveAssociatedClass")
     }
 
-    override extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
-        val methodClass = umlClassProvider.apply(#["basic", "config"], "Method")
-        getModifiableCorrespondingObject(methodClass, ConcreteClassifier).propagate [
+    override extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        javaClassifierProvider.apply(#["basic", "config"], "Method").propagate [
             val method = methods.filter(ClassMethod).filter [ name == "toString" ].head
             // return this.name;
             val jStatement = StatementsFactory.eINSTANCE.createReturn
@@ -75,8 +72,7 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             method.statements.add(jStatement)
         ]
 
-        val ejbClass = umlClassProvider.apply(#["basic", "config"], "EJB")
-        getModifiableCorrespondingObject(ejbClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "config"], "EJB").propagate [
             val setters = methods.filter [ name.startsWith("set") ]
             setters.forEach [ EcoreUtil.delete(it) ]
 
@@ -103,8 +99,7 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             }
         ]
 
-        val configClass = umlClassProvider.apply(#["basic", "config"], "Config")
-        getModifiableCorrespondingObject(configClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "config"], "Config").propagate [
             for (methodName: #["getTimestamp", "setTimestamp", "getReconfigurable", "setReconfigurable", "setEjbs", "getEjbs"]) {
                 val accessor = methods.filter [name == methodName ].head
                 EcoreUtil.delete(accessor)
@@ -135,20 +130,17 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             }
         ]
 
-        val provInterfaceClass = umlClassProvider.apply(#["basic", "config"], "ProvidedInterface")
-        getModifiableCorrespondingObject(provInterfaceClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "config"], "ProvidedInterface").propagate [
             val setter = methods.filter [ name == "setProvidedMethods" ].head
             EcoreUtil.delete(setter)
         ]
 
-        val reqInterfaceClass = umlClassProvider.apply(#["basic", "config"], "RequiredInterface")
-        getModifiableCorrespondingObject(reqInterfaceClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "config"], "RequiredInterface").propagate [
             val setter = methods.filter [ name == "setRequiredMethods" ].head
             EcoreUtil.delete(setter)
         ]
 
-        val currentUserClass = umlClassProvider.apply(#["basic", "data"], "CurrentUser")
-        getModifiableCorrespondingObject(currentUserClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "data"], "CurrentUser").propagate [
             val setters = methods.filter [ name.startsWith("set") ]
             setters.forEach [ EcoreUtil.delete(it) ]
 
@@ -176,14 +168,12 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             ]
         ]
 
-        val legacyDataClass = umlClassProvider.apply(#["basic", "data"], "LegacyData")
-        getModifiableCorrespondingObject(legacyDataClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "data"], "LegacyData").propagate [
             val setter = methods.filter [name == "setRequiredInterface" ].head
             EcoreUtil.delete(setter)
         ]
 
-        val metadataClass = umlClassProvider.apply(#["basic", "data"], "Metadata")
-        getModifiableCorrespondingObject(metadataClass, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["basic", "data"], "Metadata").propagate [
             val setter = methods.filter [name == "setEncoding" ].head
             EcoreUtil.delete(setter)
         ]

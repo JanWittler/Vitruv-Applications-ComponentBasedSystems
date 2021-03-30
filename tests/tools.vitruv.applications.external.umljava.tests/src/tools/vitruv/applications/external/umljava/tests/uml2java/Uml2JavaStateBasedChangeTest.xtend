@@ -2,19 +2,16 @@ package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.io.File
 import java.nio.file.Path
-import java.util.List
-import org.eclipse.emf.ecore.resource.Resource
-import org.eclipse.uml2.uml.Class
-import org.eclipse.uml2.uml.Model
-import org.eclipse.uml2.uml.Package
+import org.emftext.language.java.classifiers.ConcreteClassifier
+import org.emftext.language.java.containers.CompilationUnit
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
 import tools.vitruv.applications.external.umljava.tests.util.JavaFileComparisonHelper
 import tools.vitruv.applications.external.umljava.tests.util.UMLXMLFileComparisonHelper
-import tools.vitruv.domains.java.util.JavaPersistenceHelper
-import org.junit.jupiter.api.TestInfo
-import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
-import org.junit.jupiter.api.BeforeEach
+import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
+import tools.vitruv.domains.java.util.JavaPersistenceHelper
 import tools.vitruv.domains.uml.UmlDomainProvider
 
 /**
@@ -32,8 +29,7 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
         super.preloadModel(path)
 
         renewResourceCache
-        val sourceResource = sourceModel.resource
-        extendJavaModel(path, [n, c|retrieveUMLClass(sourceResource, n, c)])
+        extendJavaModel(path, [n, c|retrieveJavaClassifier(c, n)])
 
         assertTargetModelEquals(path.parent.resolve("expected_src"))
     }
@@ -51,9 +47,9 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
      * Called after preloading the UML model and generating the Java model to extend the Java model.
      * Extending the Java model is required, otherwise any conservative change sequence leads to the correct Java model (assuming correct and complete consistency specification).
      * @param preloadedModelPath The path from which the model used for preloading was taken.
-     * @param umlClassProvider A function taking a list of namespaces (the packages) and the name of the class as arguments and returning the appropriate uml class.
+     * @param javaClassifierProvider A function taking a sequence of namespaces (the packages) and the name of the classifier as arguments and returning the matching Java classifier.
      */
-    def void extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider)
+    def void extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider)
 
     /**
      * Loads the changed UML model contained in the provided directory, generates the change sequence, 
@@ -75,13 +71,10 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
         assertFileOrDirectoryEquals(expected.toFile, targetModelFolder.toFile)
     }
 
-    private def retrieveUMLClass(Resource umlResource, List<String> packages, String className) {
-        val umlModel = umlResource.contents.filter(Model).head
-        var umlPackage = umlModel as Package
-        for (packageName : packages) {
-            umlPackage = umlPackage?.packagedElements.filter(Package).filter[name == packageName].head
-        }
-        return umlPackage.packagedElements.filter(Class).filter[name == className].head
+    private def retrieveJavaClassifier(String className, Iterable<String> namespaces) {
+        val path = testProjectFolder.resolve(JavaPersistenceHelper.buildJavaFilePath(className + ".java", namespaces))
+        val compilationUnit = resourceAt(path).contents.head as CompilationUnit
+        return compilationUnit.classifiers.filter [ name == className ].head
     }
 
     val fileComparisonHelpers = #[new JavaFileComparisonHelper, new UMLXMLFileComparisonHelper]

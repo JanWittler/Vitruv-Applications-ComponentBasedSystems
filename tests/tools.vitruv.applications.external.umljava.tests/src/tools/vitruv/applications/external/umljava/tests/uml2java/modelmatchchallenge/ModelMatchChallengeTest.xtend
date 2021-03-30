@@ -1,9 +1,7 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchallenge
 
 import java.nio.file.Path
-import java.util.List
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -51,31 +49,28 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         return super.initialModelPath(testInfo)
     }
 
-    override extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
+    override extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
         if (preloadedModelPath.contains(Path.of("ExchangeElements"))) {
-            extendExchangeElementsJavaModel(umlClassProvider)
+            extendExchangeElementsJavaModel(javaClassifierProvider)
         } else {
-            extendDefaultJavaModel(umlClassProvider)
+            extendDefaultJavaModel(javaClassifierProvider)
         }
     }
 
-    private def extendDefaultJavaModel((List<String>, String)=>Class umlClassProvider) {
-        val umlClass = umlClassProvider.apply(#["de"], "DomesticAnimal")
-        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+    private def extendDefaultJavaModel((Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        javaClassifierProvider.apply(#["de"], "DomesticAnimal").propagate [
             val speciesSetter = methods.filter [name == "setSpecies" ].head
             EcoreUtil.delete(speciesSetter)
         ]
     }
 
-    private def extendExchangeElementsJavaModel((List<String>, String)=>Class umlClassProvider) {
-        val umlClass = umlClassProvider.apply(#["de", "shop"], "DomesticAnimal")
-        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+    private def extendExchangeElementsJavaModel((Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        javaClassifierProvider.apply(#["de", "shop"], "DomesticAnimal").propagate [
             val speciesSetter = methods.filter [ name == "setSpecies"].head
             EcoreUtil.delete(speciesSetter)
         ]
 
-        val umlClass2 = umlClassProvider.apply(#["de", "core"], "DomesticAnimalNew")
-        getModifiableCorrespondingObject(umlClass2, ConcreteClassifier).propagate [
+        javaClassifierProvider.apply(#["de", "core"], "DomesticAnimalNew").propagate [
             val nicknameSetter = methods.filter [name == "setNickname" ].head
             EcoreUtil.delete(nicknameSetter)
         ]

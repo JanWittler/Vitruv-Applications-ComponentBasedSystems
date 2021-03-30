@@ -9,7 +9,6 @@ import java.util.List
 import java.util.Map
 import org.apache.commons.io.FilenameUtils
 import org.eclipse.emf.common.util.URI
-import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtend.lib.annotations.Accessors
@@ -129,36 +128,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     protected def loadExternalModel(Path path) {
         val resourceSet = new ResourceSetImpl
         return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
-    }
-
-    /**
-     * Returns the object corresponding the given object with the requested type and tag "".
-     * Asserts that there is exactly one corresponding object of the requested type.
-     * @param original The object to which to find correspondences.
-     * @param type The class type of the corresponding object.
-     * @return Returns the corresponding object.
-     */
-    def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type) {
-        return getModifiableCorrespondingObject(original, type, "")
-    }
-
-    /**
-     * Returns the object corresponding the given object with the requested type and tag.
-     * Asserts that there is exactly one corresponding object of the requested type.
-     * @param original The object to which to find correspondences.
-     * @param type The class type of the corresponding object.
-     * @param tag The tag with which the correspondence should be tagged.
-     * @return Returns the corresponding object.
-     */
-    def <T extends EObject> getModifiableCorrespondingObject(EObject original, Class<T> type, String tag) {
-        val correspondences = getCorrespondingEObjects(original, type, tag)
-        assertEquals(1, correspondences.size)
-        return getModifiableInstance(correspondences.head)
-    }
-
-    private def <T extends EObject> getModifiableInstance(T original) {
-        val originalURI = EcoreUtil.getURI(original)
-        return originalURI.trimFragment.resourceAt?.getEObject(originalURI.fragment) as T
     }
 
     def assertSourceModelEquals(File expected) {

@@ -1,9 +1,7 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
 import java.nio.file.Path
-import java.util.List
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.uml2.uml.Class
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.emftext.language.java.expressions.ExpressionsFactory
 import org.emftext.language.java.literals.LiteralsFactory
@@ -85,9 +83,8 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
         super.resourcesDirectory.resolve("BasicSuite")
     }
 
-    override extendJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
-        val umlClass = umlClassProvider.apply(#["com.example.first"], "Example")
-        getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
+    override extendJavaModel(Path preloadedModelPath, (Iterable<String>, String) => ConcreteClassifier javaClassifierProvider) { 
+        javaClassifierProvider.apply(#["com.example.first"], "Example").propagate [
             val setName = methods.filter [ name == "setName" ].head
             EcoreUtil.delete(setName)
 
