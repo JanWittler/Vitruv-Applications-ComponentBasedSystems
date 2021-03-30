@@ -51,15 +51,15 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         return super.initialModelPath(testInfo)
     }
 
-    override enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
+    override extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
         if (preloadedModelPath.contains(Path.of("ExchangeElements"))) {
-            enrichExchangeElementsJavaModel(umlClassProvider)
+            extendExchangeElementsJavaModel(umlClassProvider)
         } else {
-            enrichDefaultJavaModel(umlClassProvider)
+            extendDefaultJavaModel(umlClassProvider)
         }
     }
 
-    private def enrichDefaultJavaModel((List<String>, String)=>Class umlClassProvider) {
+    private def extendDefaultJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de"], "DomesticAnimal")
         getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
             val speciesSetter = methods.filter [name == "setSpecies" ].head
@@ -67,7 +67,7 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         ]
     }
 
-    private def enrichExchangeElementsJavaModel((List<String>, String)=>Class umlClassProvider) {
+    private def extendExchangeElementsJavaModel((List<String>, String)=>Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["de", "shop"], "DomesticAnimal")
         getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
             val speciesSetter = methods.filter [ name == "setSpecies"].head

@@ -85,7 +85,7 @@ abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
         super.resourcesDirectory.resolve("BasicSuite")
     }
 
-    override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
+    override extendJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
         val umlClass = umlClassProvider.apply(#["com.example.first"], "Example")
         getModifiableCorrespondingObject(umlClass, ConcreteClassifier).propagate [
             val setName = methods.filter [ name == "setName" ].head

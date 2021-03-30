@@ -32,7 +32,7 @@ abstract class ThesisSystemExampleTest extends Uml2JavaStateBasedChangeTest {
         super.preloadModel(path)
     }
 
-    override enrichJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
+    override extendJavaModel(Path preloadedModelPath, (List<String>, String) => Class umlClassProvider) {
         val departmentClass = umlClassProvider.apply(#["root"], "Department")
         getModifiableCorrespondingObject(departmentClass, ConcreteClassifier).propagate [
             val idSetter = methods.filter [ name == "setId" ].head

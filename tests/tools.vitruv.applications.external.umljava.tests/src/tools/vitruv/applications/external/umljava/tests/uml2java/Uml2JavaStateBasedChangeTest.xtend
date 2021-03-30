@@ -33,7 +33,7 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
 
         renewResourceCache
         val sourceResource = sourceModel.resource
-        enrichJavaModel(path, [n, c|retrieveUMLClass(sourceResource, n, c)])
+        extendJavaModel(path, [n, c|retrieveUMLClass(sourceResource, n, c)])
 
         assertTargetModelEquals(path.parent.resolve("expected_src"))
     }
@@ -49,11 +49,11 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
 
     /**
      * Called after preloading the UML model and generating the Java model to extend the Java model.
-     * Enriching the Java model is required, otherwise any conservative change sequence leads to the correct Java model (assuming correct and complete consistency specification).
+     * Extending the Java model is required, otherwise any conservative change sequence leads to the correct Java model (assuming correct and complete consistency specification).
      * @param preloadedModelPath The path from which the model used for preloading was taken.
      * @param umlClassProvider A function taking a list of namespaces (the packages) and the name of the class as arguments and returning the appropriate uml class.
      */
-    def void enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider)
+    def void extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider)
 
     /**
      * Loads the changed UML model contained in the provided directory, generates the change sequence, 

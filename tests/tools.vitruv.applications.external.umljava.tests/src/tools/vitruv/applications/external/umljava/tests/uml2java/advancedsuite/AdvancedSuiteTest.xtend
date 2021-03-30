@@ -60,7 +60,7 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
         testModelInDirectory("RemoveAssociatedClass")
     }
 
-    override enrichJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
+    override extendJavaModel(Path preloadedModelPath, (List<String>, String)=>Class umlClassProvider) {
         val methodClass = umlClassProvider.apply(#["basic", "config"], "Method")
         getModifiableCorrespondingObject(methodClass, ConcreteClassifier).propagate [
             val method = methods.filter(ClassMethod).filter [ name == "toString" ].head
