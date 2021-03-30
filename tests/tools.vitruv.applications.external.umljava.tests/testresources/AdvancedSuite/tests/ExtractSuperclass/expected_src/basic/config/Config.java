@@ -2,6 +2,7 @@ package basic.config;
 
 import basic.config.EJB;
 import java.lang.String;
+import java.util.ArrayList;
 
 
 public class Config {

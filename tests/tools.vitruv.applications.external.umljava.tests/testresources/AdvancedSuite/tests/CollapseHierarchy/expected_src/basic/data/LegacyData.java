@@ -1,5 +1,7 @@
 package basic.data;
 
+import basic.config.RequiredInterface;
+
 
 public class LegacyData {
 	public RequiredInterface requiredInterface;

@@ -3,6 +3,7 @@ package basic.config;
 import basic.config.ProvidedInterface;
 import basic.config.RequiredInterface;
 import java.lang.String;
+import java.util.ArrayList;
 
 
 public class EJB {

@@ -1,5 +1,6 @@
 package basic.data;
 
+import basic.config.RequiredInterface;
 import basic.data.AbstractData;
 
 
