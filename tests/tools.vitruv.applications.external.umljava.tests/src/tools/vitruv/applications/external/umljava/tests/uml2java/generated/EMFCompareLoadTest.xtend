@@ -13,19 +13,17 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.uml2.uml.Class
 import org.eclipse.uml2.uml.Model
 import org.eclipse.uml2.uml.Package
-import org.eclipse.uml2.uml.resource.UMLResource
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
-import tools.vitruv.applications.external.strategies.BasicSimilarityBasedStateBasedChangeDiffProvider
-import tools.vitruv.applications.external.strategies.BasicStateBasedChangeDiffProvider
-import tools.vitruv.applications.external.strategies.StateBasedChangeDiffProvider
-import tools.vitruv.applications.external.umljava.tests.util.UMLResourceWithoutUUIDsFactoryImpl
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertTrue
+import tools.vitruv.applications.external.strategies.DefaultStateBasedDifferencesProvider
+import tools.vitruv.applications.external.strategies.SimilarityBasedDifferencesProvider
+import tools.vitruv.applications.external.strategies.StateBasedDifferencesProvider
 
 @ExtendWith(TestProjectManager, TestLogging)
 class EMFCompareLoadTest {
@@ -39,8 +37,6 @@ class EMFCompareLoadTest {
 		this.testProjectFolder = testProjectFolder
 		
 		resourceSet = new ResourceSetImpl
-		resourceSet.resourceFactoryRegistry.getExtensionToFactoryMap().put(UMLResource::FILE_EXTENSION, new UMLResourceWithoutUUIDsFactoryImpl())
-		
 		val resourcePath = Path.of("testresources").resolve("Generated/Large/Base.uml")
 		assertTrue(Files.exists(resourcePath), '''please first generate the UML model using UmlModelGenerator#generateLargeModel and place it in «resourcePath»''')
 		val copiedPath = testProjectFolder.resolve("Original.uml")
@@ -84,19 +80,19 @@ class EMFCompareLoadTest {
 	}
 	
 	def void generateDiffs() {
-		val providers = #[new BasicStateBasedChangeDiffProvider, new BasicSimilarityBasedStateBasedChangeDiffProvider]
+		val providers = #[new DefaultStateBasedDifferencesProvider, new SimilarityBasedDifferencesProvider]
 		val originalPath = testProjectFolder.resolve("Original.uml")
 		val originalResource = resourceSet.getResource(URI.createFileURI(originalPath.toFile.absolutePath), true)
 		for (provider : providers) {
 			val stopwatch = Stopwatch.createStarted
-			val diffs = provider.getChangeSequences(resource, originalResource)
+			val diffs = provider.getDifferences(resource, originalResource)
 			stopwatch.stop
 			println('''«provider.class.name»: «stopwatch.elapsed(TimeUnit.MILLISECONDS)»ms''')
 			printDiffs(diffs, provider)
 		}
 	}
 	
-	private def printDiffs(List<Diff> diffs, StateBasedChangeDiffProvider provider) {
+	private def printDiffs(List<Diff> diffs, StateBasedDifferencesProvider provider) {
 		println('''diffs from «provider.class.name»:
 	«FOR diff: diffs»
 	«diff»

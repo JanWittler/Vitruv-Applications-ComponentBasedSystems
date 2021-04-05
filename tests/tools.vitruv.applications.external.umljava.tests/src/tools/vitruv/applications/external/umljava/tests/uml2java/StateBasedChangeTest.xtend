@@ -27,6 +27,7 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
+import org.eclipse.emf.ecore.resource.Resource
 
 /**
  * The basic test class for state based change propagation tests.
@@ -96,6 +97,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
      */
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
+        resolveChangedState(changedModel)
+        assertSourceModelEquals(changedModelPath.toFile)
+    }
+
+    def resolveChangedState(Resource changedModel) {
         val sourceModelURI = sourceModelPath.uri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
         logChanges()
@@ -105,8 +111,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val model = sourceModel.resource
         ResourceUtil.copyIDs(changedModel, model)
         model.save(emptyMap)
-
-        assertSourceModelEquals(changedModelPath.toFile)
     }
 
     protected def preloadModel(Path path) {
