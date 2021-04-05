@@ -72,6 +72,16 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
             method.statements.add(jStatement)
         ]
 
+        javaClassifierProvider.apply(#["basic", "config"], "ProvidedInterface").propagate [
+            val setter = methods.filter [ name == "setProvidedMethods" ].head
+            EcoreUtil.delete(setter)
+        ]
+
+        javaClassifierProvider.apply(#["basic", "config"], "RequiredInterface").propagate [
+            val setter = methods.filter [ name == "setRequiredMethods" ].head
+            EcoreUtil.delete(setter)
+        ]
+
         javaClassifierProvider.apply(#["basic", "config"], "EJB").propagate [
             val setters = methods.filter [ name.startsWith("set") ]
             setters.forEach [ EcoreUtil.delete(it) ]
@@ -128,16 +138,6 @@ abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
                 jStatement.returnValue = jReference
                 method.statements.add(jStatement)
             }
-        ]
-
-        javaClassifierProvider.apply(#["basic", "config"], "ProvidedInterface").propagate [
-            val setter = methods.filter [ name == "setProvidedMethods" ].head
-            EcoreUtil.delete(setter)
-        ]
-
-        javaClassifierProvider.apply(#["basic", "config"], "RequiredInterface").propagate [
-            val setter = methods.filter [ name == "setRequiredMethods" ].head
-            EcoreUtil.delete(setter)
         ]
 
         javaClassifierProvider.apply(#["basic", "data"], "CurrentUser").propagate [
