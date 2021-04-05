@@ -7,7 +7,7 @@ import java.util.HashMap
 import java.util.HashSet
 import java.util.List
 import java.util.Map
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl
 import org.eclipse.emf.ecore.util.EcoreUtil
@@ -15,12 +15,12 @@ import org.eclipse.xtend.lib.annotations.Accessors
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.^extension.ExtendWith
-import tools.vitruv.applications.external.strategies.DerivedSequenceProvidingStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.strategies.TraceableStateBasedChangeResolutionStrategy
+import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
+import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper.ComparisonResult
 import tools.vitruv.applications.external.umljava.tests.util.ResourceUtil
-import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.framework.change.description.PropagatedChange
 import tools.vitruv.framework.domains.StateBasedChangeResolutionStrategy
-import tools.vitruv.framework.util.datatypes.VURI
 import tools.vitruv.testutils.LegacyVitruvApplicationTest
 import tools.vitruv.testutils.TestLogging
 import tools.vitruv.testutils.TestProject
@@ -28,158 +28,173 @@ import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
 
+/**
+ * The basic test class for state based change propagation tests.
+ * Before each tests, preloads a source model and verifies its correctness, and generates the corresponding target model.
+ * Logs the propagated and derived change sequence to a file in the test directory.
+ * Provides support for directory comparison and accessing modifiable corresponding objects of source model objects.
+ * 
+ * @author Jan Wittler
+ */
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
-	public static val INITIAL_MODEL_NAME = "Base"
-	public static val MODEL_FILE_EXTENSION ="uml"
-	
-	/** For any test case tagged with this tag, the model preloading will be skipped. */
-	public static val CUSTOM_INITIAL_MODEL_TAG = "StateBasedChangeTest.CustomInitialModel"
-	
-	protected var Path testProjectFolder
-	val stateBasedStrategyLogger = new DerivedSequenceProvidingStateBasedChangeResolutionStrategy()
-	@Accessors(PUBLIC_GETTER) protected var List<PropagatedChange> propagatedChanges
-	
-	def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
-	
-	@BeforeEach
-	def setupStrategyLogger() {
-		this.propagatedChanges = null
-		this.stateBasedStrategyLogger.reset()
-		this.stateBasedStrategyLogger.setStrategy(getStateBasedResolutionStrategy())
-	}
-	
-	@BeforeEach
-	def setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
-		this.testProjectFolder = testProjectFolder
-		
-		if (!testInfo.tags.contains(CUSTOM_INITIAL_MODEL_TAG)) {
-			preloadModel(resourcesDirectory.resolve(INITIAL_MODEL_NAME + "." + MODEL_FILE_EXTENSION))
-		}
-	}
-	
-	override protected getChangePropagationSpecifications() {
-		val spec = new UmlToJavaChangePropagationSpecification()
-		spec.sourceDomain.stateBasedChangeResolutionStrategy = stateBasedStrategyLogger
-		return #[spec]
-	}
-	
-	def getDerivedChangeSequence() {
-		stateBasedStrategyLogger.getChangeSequence()
-	}
-	
-	def getModelsDirectory() {
-		testProjectFolder.resolve("model")
-	}
-	
-	def resourcesDirectory() {
-		Path.of("testresources")
-	}
-	
-	def getSourceModelPath() {
-		modelsDirectory.resolve("Model." + MODEL_FILE_EXTENSION)
-	}
-	
-	def resolveChangedState(Path changedModelPath) {
-		val changedModel = loadModel(changedModelPath)
-		val sourceModelURI = VURI.getInstance(sourceModelPath.toString).EMFUri
-		propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
-		assertSourceModelEquals(changedModelPath.toFile)
-	}
-	
-	def preloadModel(Path path) {
-		val originalModel = loadModel(path)
-		resourceAt(sourceModelPath).record [
-			contents += EcoreUtil.copy(originalModel.contents.head)
-		]
-		propagate
-		
-		//preserve original ids
-		val model = virtualModel.getModelInstance(VURI.getInstance(sourceModelPath.toString)).resource
-		ResourceUtil.copyIDs(originalModel, model)
-		model.save(emptyMap)
-		
-		assertSourceModelEquals(path.toFile)
-	}
-	
-	def loadModel(Path path) {
-		val resourceSet = new ResourceSetImpl
-		return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
-	}
-	
-	enum FileComparisonResult {
-		CORRECT,
-		MISSING_FILE,
-		DIR_INSTEAD_OF_FILE,
-		FILE_INSTEAD_OF_DIR,
-		INCORRECT_FILE,
-		FILE_SHOULD_NOT_EXIST
-	}
-	
-	def assertSourceModelEquals(File expected) {
-		assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
-	}
-	
-	def assertFileOrDirectoryEquals(File expected, File actual) {
-		val result = internalFileOrDirectoryEqual(expected, actual)
-		val incorrectResults = result.filter[_, value | value != FileComparisonResult.CORRECT]
-		assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
-	}
-	
-	private def Map<File, FileComparisonResult> internalFileOrDirectoryEqual(File expected, File actual) {
-		val result = new HashMap<File, StateBasedChangeTest.FileComparisonResult>()
-		if (!actual.exists) {
-			result.put(actual, FileComparisonResult.MISSING_FILE)
-		}
-		else if (!expected.isDirectory == actual.isDirectory) {
-			result.put(actual, actual.isDirectory ? FileComparisonResult.DIR_INSTEAD_OF_FILE : FileComparisonResult.FILE_INSTEAD_OF_DIR)
-		}
-		else {
-			if (expected.isDirectory) {
-				val visitedFiles = new HashSet<File>()
-				for (File file: expected.listFiles().filter[f|!f.hidden]) {
-					val relativize = expected.toPath().relativize(file.toPath())
-					val fileInOther = actual.toPath().resolve(relativize).toFile()
-					visitedFiles += fileInOther
-					val subResult = internalFileOrDirectoryEqual(file, fileInOther)
-					subResult.forEach[key, value | result.put(key, value)]
-				}
-				for (File file: actual.listFiles().filter[f|!f.hidden]) {
-					if (!visitedFiles.contains(file)) {
-						result.put(file, FileComparisonResult.FILE_SHOULD_NOT_EXIST)
-					}
-				}
-			}
-			else {
-				result.put(actual, compareFiles(expected, actual))
-			}
-		}
-		return result
-	}
-	
-	def compareFiles(File expected, File actual) {
-		if (FileUtils.contentEquals(expected, actual)) {
-			return FileComparisonResult.CORRECT
-		}
-		return FileComparisonResult.INCORRECT_FILE
-	}
-	
-	def serializedChanges() {
-		'''propagated changes:
-	«propagatedChanges»''' + "\n" +
-		'''vitruvius changes:
+    protected var Path testProjectFolder
+    var String modelFileExtension
+    protected val traceableStateBasedStrategy = new TraceableStateBasedChangeResolutionStrategy
+    @Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
+
+    /** The <code>StateBasedChangeResolutionStrategy</code> to use. */
+    def StateBasedChangeResolutionStrategy getStateBasedResolutionStrategy()
+
+    /**
+     * The path to the model which shall be preloaded.
+     * @param testInfo the info for the test to execute.
+     */
+    def Path initialModelPath(TestInfo testInfo)
+
+    @BeforeEach
+    protected def void patchDomains() {
+        changePropagationSpecifications.forEach [
+            sourceDomain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
+        ]
+    }
+
+    @BeforeEach
+    def setupStrategyLogger() {
+        this.traceableStateBasedStrategy.strategy = stateBasedResolutionStrategy
+    }
+
+    @BeforeEach
+    protected def void setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
+        this.testProjectFolder = testProjectFolder
+        preloadModel(initialModelPath(testInfo))
+        this.traceableStateBasedStrategy.reset()
+        this.propagatedChanges = null
+    }
+
+    def getDerivedChangeSequence() {
+        traceableStateBasedStrategy.getChangeSequence
+    }
+
+    /** The directory where all test resources are. By defaults returns <code>/testresources</code>. */
+    protected def resourcesDirectory() {
+        Path.of("testresources")
+    }
+
+    protected def getSourceModelPath() {
+        testProjectFolder.resolve("model").resolve("Model." + modelFileExtension)
+    }
+
+    protected def getSourceModel() {
+        virtualModel.getModelInstance(sourceModelPath.uri)
+    }
+
+    /**
+     * Resolves a changed model with the current VSUM.
+     * Logs the performed changes to file and validates the correctness of the source model after propagation.
+     * @param changedModelPath The path of the changed model.
+     */
+    def resolveChangedState(Path changedModelPath) {
+        val changedModel = loadExternalModel(changedModelPath)
+        val sourceModelURI = sourceModelPath.uri
+        propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
+        logChanges()
+
+        // preserve original ids
+        // should be done by the change propagation
+        val model = sourceModel.resource
+        ResourceUtil.copyIDs(changedModel, model)
+        model.save(emptyMap)
+
+        assertSourceModelEquals(changedModelPath.toFile)
+    }
+
+    protected def preloadModel(Path path) {
+        modelFileExtension = FilenameUtils.getExtension(path.toString)
+        val originalModel = loadExternalModel(path)
+        resourceAt(sourceModelPath).propagate [
+            contents += EcoreUtil.copy(originalModel.contents.head)
+        ]
+
+        // preserve original ids
+        // this cannot be done in resourceAt as the resource instance is another one than the one in the virtual model
+        val model = sourceModel.resource
+        ResourceUtil.copyIDs(originalModel, model)
+        model.save(emptyMap)
+
+        assertSourceModelEquals(path.toFile)
+    }
+
+    protected def loadExternalModel(Path path) {
+        val resourceSet = new ResourceSetImpl
+        return resourceSet.getResource(URI.createFileURI(path.toFile().getAbsolutePath()), true)
+    }
+
+    def assertSourceModelEquals(File expected) {
+        assertFileOrDirectoryEquals(expected, sourceModelPath.toFile)
+    }
+
+    /**
+     * Asserts that the two provided file objects contain equal content.
+     * If directories are provided, a deep comparison of the directories content is performed.
+     * If files are provided, they are compared for equality. 
+     * To compare files @{link #compareFiles(File,File)} is used.
+     * @param The file or directory expected.
+     * @param The file or directory actually present.
+     */
+    def assertFileOrDirectoryEquals(File expected, File actual) {
+        val result = compareFileOrDirectory(expected, actual)
+        val incorrectResults = result.filter[_, value|value != ComparisonResult.SEMANTICALLY_IDENTICAL]
+        assertEquals(0, incorrectResults.size, '''got incorrect results for files: «incorrectResults»''')
+    }
+
+    /**
+     * Compares two files for equality. Uses @{link FileComparisonHelper} to compare files.
+     * @param expected The expected file.
+     * @param actual The actual file.
+     * @return Returns <code>true</code> if both files are semantically identical, otherwise <code>false</code>.
+     */
+    def compareFiles(File expected, File actual) {
+        return FileComparisonHelper.compareFiles(#[], expected, actual)
+    }
+
+    private def Map<File, ComparisonResult> compareFileOrDirectory(File expected, File actual) {
+        val result = new HashMap<File, ComparisonResult>()
+        val comparisonResult = compareFiles(expected, actual)
+        if (comparisonResult !== null) {
+            result.put(actual, comparisonResult)
+        }
+        val visitedFiles = new HashSet<File>()
+        if (expected.isDirectory) {
+            for (File file : expected.listFiles().filter[f|!f.hidden]) {
+                val relativize = expected.toPath().relativize(file.toPath())
+                val fileInOther = actual.toPath().resolve(relativize).toFile()
+                visitedFiles += fileInOther
+                val subResult = compareFileOrDirectory(file, fileInOther)
+                subResult.forEach[key, value|result.put(key, value)]
+            }
+        }
+        if (actual.isDirectory) {
+            for (File file : actual.listFiles().filter[f|!f.hidden]) {
+                if (!visitedFiles.contains(file)) {
+                    result.put(file, ComparisonResult.FILE_SHOULD_NOT_EXIST)
+                }
+            }
+        }
+        return result
+    }
+
+    def serializedChanges() {
+        '''propagated changes:
+	«propagatedChanges»''' + "\n" + '''vitruvius changes:
 	«getDerivedChangeSequence()»'''
-	}
-	
-	def logChanges() {
-		val output = testProjectFolder.resolve("Changes.log").toFile
-		output.createNewFile
-		val writer = new FileWriter(output.absolutePath)
-		writer.write(serializedChanges)
-		writer.close
-	}
-	
-	final def printChanges() {
-		println(serializedChanges)
-	}
+    }
+
+    def logChanges() {
+        val output = testProjectFolder.resolve("Changes.log").toFile
+        output.createNewFile
+        val writer = new FileWriter(output.absolutePath)
+        writer.write(serializedChanges)
+        writer.close
+    }
 }

@@ -12,9 +12,6 @@ public class ThesisSystem {
 	public ArrayList<Department>getDepartments() {
 		return this.departments;
 	}
-	public void setDepartments(ArrayList<Department>departments) {
-		this.departments = departments;
-	}
 	public ArrayList<Thesis>theses;
 	public ArrayList<Thesis>getTheses() {
 		return this.theses;

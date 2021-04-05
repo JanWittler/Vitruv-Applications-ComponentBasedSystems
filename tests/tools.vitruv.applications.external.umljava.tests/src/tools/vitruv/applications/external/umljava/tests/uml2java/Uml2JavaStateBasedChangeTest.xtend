@@ -1,88 +1,85 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java
 
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
 import java.nio.file.Path
-import org.apache.commons.io.FilenameUtils
-import tools.vitruv.applications.external.umljava.tests.util.UMLXMLComparisonHelper
+import org.emftext.language.java.classifiers.ConcreteClassifier
+import org.emftext.language.java.containers.CompilationUnit
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
+import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
+import tools.vitruv.applications.external.umljava.tests.util.JavaFileComparisonHelper
+import tools.vitruv.applications.external.umljava.tests.util.UMLXMLFileComparisonHelper
+import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
+import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
+import tools.vitruv.domains.uml.UmlDomainProvider
 
-abstract class Uml2JavaStateBasedChangeTest extends DiffProvidingStateBasedChangeTest {
-	override preloadModel(Path path) {
-		super.preloadModel(path)
-		enrichJavaModel(path)
-		assertTargetModelEquals(path.parent.resolve("expected_src"))
-	}
-	
-	def void enrichJavaModel(Path preloadedModelPath)
-	
-	def testModels(String directory) {
-		val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
-		resolveChangedState(testDirectory.resolve("Model.uml"))
-		logChanges()
-		assertTargetModelEquals(testDirectory.resolve("expected_src"))
-	}
-	
-	def assertTargetModelEquals(Path expected) {
-		val targetModelFolder = testProjectFolder.resolve(JavaPersistenceHelper.javaProjectSrc)
-		assertFileOrDirectoryEquals(expected.toFile, targetModelFolder.toFile)
-	}
-	
-	override compareFiles(File expected, File actual) {
-		val result = super.compareFiles(expected, actual)
-		if (result == FileComparisonResult.CORRECT) {
-			return result
-		}
-		val e1 = FilenameUtils.getExtension(expected.toString)
-		val e2 = FilenameUtils.getExtension(actual.toString)
-		if (e1 == e2) {
-			if (e1 == "java") {
-				return compareJavaFiles(expected, actual)
-			}
-			else if (e1 == "uml") {
-				return compareUMLFiles(expected, actual)
-			}
-		}
-		return result
-	}
-	
-	/**
-	 * Compares two java files.
-	 * The comparison compares each line of the files for equality, leading or trailing whitespaces are ignored.
-	 * Empty lines are ignored.
-	 * Spaces before semicolon are ignored.
-	 * Lines starting with an import statement are ignored as imports are currently not cleaned up by the consistency mechanism.
-	 */
-	def compareJavaFiles(File expected, File actual) {
-		val readerExpected = new BufferedReader(new FileReader(expected))
-		val readerActual = new BufferedReader(new FileReader(actual))
-		
-		var lineExpected = readerExpected.readLineTrimmed
-		var lineActual = readerActual.readLineTrimmed
-		while (lineExpected !== null || lineActual !== null) {
-			if (lineExpected !== null && (lineExpected.startsWith("import") || lineExpected.empty)) {
-				lineExpected = readerExpected.readLineTrimmed
-			}
-			else if (lineActual !== null && (lineActual.startsWith("import") || lineActual.empty)) {
-				lineActual = readerActual.readLineTrimmed
-			}
-			else {
-				if (lineExpected != lineActual) {
-					return FileComparisonResult.INCORRECT_FILE
-				}
-				lineExpected = readerExpected.readLineTrimmed
-				lineActual = readerActual.readLineTrimmed
-			}
-		}
-		return FileComparisonResult.CORRECT
-	}
-	
-	private def readLineTrimmed(BufferedReader reader) {
-		reader.readLine?.trim?.replace(" ;", ";")
-	}
-	
-	def compareUMLFiles(File expected, File actual) {
-		return UMLXMLComparisonHelper.compareUMLFiles(expected, actual) ? FileComparisonResult.CORRECT : FileComparisonResult.INCORRECT_FILE
-	}
+/**
+ * The basic test class for UML to Java state based change tests.
+ * Automatically verifies the correct of the target model after preloading the source model and propagating changes.
+ * 
+ * @author Jan Wittler
+ */
+abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
+    override initialModelPath(TestInfo testInfo) {
+        return resourcesDirectory.resolve("Base.uml")
+    }
+
+    override preloadModel(Path path) {
+        super.preloadModel(path)
+
+        renewResourceCache
+        extendJavaModel(path, [n, c|retrieveJavaClassifier(c, n)])
+
+        assertTargetModelEquals(path.parent.resolve("expected_src"))
+    }
+
+    @BeforeEach
+    override patchDomains() {
+        new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
+    }
+
+    override protected getChangePropagationSpecifications() {
+        return #[new UmlToJavaChangePropagationSpecification, new JavaToUmlChangePropagationSpecification]
+    }
+
+    /**
+     * Called after preloading the UML model and generating the Java model to extend the Java model.
+     * Extending the Java model is required, otherwise any conservative change sequence leads to the correct Java model (assuming correct and complete consistency specification).
+     * @param preloadedModelPath The path from which the model used for preloading was taken.
+     * @param javaClassifierProvider A function taking a sequence of namespaces (the packages) and the name of the classifier as arguments and returning the matching Java classifier.
+     */
+    def void extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider)
+
+    /**
+     * Loads the changed UML model contained in the provided directory, generates the change sequence, 
+     * and propagates changes to the Java domain.
+     * The directory is resolved relative to the {@link Uml2JavaStateBasedChangeTest#resourcesDirectory resources directory}.
+     * Verifies the correctness of the source and target model.
+     * The model is assumed to be at <code>/Model.uml</code>.
+     * The expected java source files are assumed to be at <code>/expected_src</code>.
+     * @param directory The directory in which the files to test reside.
+     */
+    def testModelInDirectory(String directory) {
+        val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
+        resolveChangedState(testDirectory.resolve("Model.uml"))
+        assertTargetModelEquals(testDirectory.resolve("expected_src"))
+    }
+
+    def assertTargetModelEquals(Path expected) {
+        val targetModelFolder = testProjectFolder.resolve(JavaPersistenceHelper.javaProjectSrc)
+        assertFileOrDirectoryEquals(expected.toFile, targetModelFolder.toFile)
+    }
+
+    private def retrieveJavaClassifier(String className, Iterable<String> namespaces) {
+        val path = testProjectFolder.resolve(JavaPersistenceHelper.buildJavaFilePath(className + ".java", namespaces))
+        val compilationUnit = resourceAt(path).contents.head as CompilationUnit
+        return compilationUnit.classifiers.filter [ name == className ].head
+    }
+
+    val fileComparisonHelpers = #[new JavaFileComparisonHelper, new UMLXMLFileComparisonHelper]
+
+    override compareFiles(File expected, File actual) {
+        return FileComparisonHelper.compareFiles(fileComparisonHelpers, expected, actual)
+    }
 }

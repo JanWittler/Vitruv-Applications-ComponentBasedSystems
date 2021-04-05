@@ -8,11 +8,8 @@ public class Example {
 	public String getName() {
 		return this.name;
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
 	public boolean nameEquals(String otherName) {
-		return false;
+		return this.name == otherName;
 	}
 	private int counter;
 	public int getCounter() {

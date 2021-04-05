@@ -1,6 +1,7 @@
 import org.eclipse.uml2.uml.Property
+import org.emftext.language.java.members.ClassMethod
 import org.emftext.language.java.members.Field
-import tools.vitruv.applications.umljava.uml2java.UmlToJavaTag
+import tools.vitruv.applications.umljava.util.UmlJavaCorrespondenceTag
 
 import static tools.vitruv.applications.umljava.util.CommonUtil.showMessage
 import static tools.vitruv.applications.util.temporary.java.JavaMemberAndParameterUtil.*
@@ -20,19 +21,19 @@ import routines umlToJavaTypePropagation using qualified names
 //We can not define one single reaction for attribute creation in enums and classes because
 //they don't share a common superclass for "having ownedAttributes"
 reaction UmlPropertyInsertedInClass {
-	after element uml::Property inserted in uml::Class[ownedAttribute]
-	call {
-		createOrFindJavaField(newValue, affectedEObject)
-		insertJavaField(newValue, affectedEObject)
-	}
+    after element uml::Property inserted in uml::Class[ownedAttribute]
+    call {
+        createOrFindJavaField(newValue, affectedEObject)
+        insertJavaField(newValue, affectedEObject)
+    }
 }
 
 reaction UmlPropertyInsertedInDataType {
-	after element uml::Property inserted in uml::DataType[ownedAttribute]
-	call {
-		createOrFindJavaField(newValue, affectedEObject)
-		insertJavaField(newValue, affectedEObject)
-	}
+    after element uml::Property inserted in uml::DataType[ownedAttribute]
+    call {
+        createOrFindJavaField(newValue, affectedEObject)
+        insertJavaField(newValue, affectedEObject)
+    }
 }
 
 routine createOrFindJavaField(uml::Property umlProperty, uml::Classifier umlClassifier) {
@@ -47,29 +48,35 @@ routine createOrFindJavaField(uml::Property umlProperty, uml::Classifier umlClas
                 createJavaField(umlProperty) 
             } else {
                 addAttributeCorrespondence(umlProperty, foundField)
-                createOrFindJavaGetter(umlProperty, foundField)
-            	createOrFindJavaSetter(umlProperty, foundField)
+                val getter = jClassifier.methods.filter(ClassMethod).filter [ name == buildGetterName(umlProperty.name) ].claimNotMany
+                val setter = jClassifier.methods.filter(ClassMethod).filter [ name == buildSetterName(umlProperty.name) ].claimNotMany
+                if (getter !== null) {
+                	createAccessorCorrespondence(umlProperty, getter, UmlJavaCorrespondenceTag.GETTER)
+                }
+                if (setter !== null) {
+                	createAccessorCorrespondence(umlProperty, setter, UmlJavaCorrespondenceTag.SETTER)
+                }
             }
+            changeJavaAttributeType(umlProperty)
         }
     }    
 }
 
 routine createJavaField(uml::Property umlProperty) {
-	match {
-		require absence of java::Field corresponding to umlProperty
-	}
-	action {
-		val javaField = create java::Field and initialize {
+    match {
+        require absence of java::Field corresponding to umlProperty
+    }
+    action {
+        val javaField = create java::Field and initialize {
             javaField.name = umlProperty.name
             javaField.makePublic
         }
         add correspondence between umlProperty and javaField
         call {
-			createOrFindJavaGetter(umlProperty, javaField)
-        	createOrFindJavaSetter(umlProperty, javaField)
-			changeJavaAttributeType(umlProperty)
+            createOrFindJavaGetter(umlProperty, javaField)
+            createOrFindJavaSetter(umlProperty, javaField)
         }
-	}
+    }
 }
 
 routine addAttributeCorrespondence(uml::Property umlAttribute, java::Field javaField) {
@@ -79,45 +86,19 @@ routine addAttributeCorrespondence(uml::Property umlAttribute, java::Field javaF
 }
 
 routine insertJavaField(uml::Property umlProperty, uml::Classifier umlClassifier) {
-	match {
-		val javaField = retrieve java::Field corresponding to umlProperty
-		val javaClassifier = retrieve java::ConcreteClassifier corresponding to umlClassifier
-		val javaGetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.GETTER
-		val javaSetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.SETTER
-	}
-	action {
-		update javaClassifier {
-			javaClassifier.members += javaField
-			javaGetter.ifPresent [ javaClassifier.members += it ]
-			javaSetter.ifPresent [ javaClassifier.members += it ]
-		}
-	}
-}
-
-reaction UmlPropertyRemovedFromClass {
-	after element uml::Property removed from uml::Class[ownedAttribute]
-	call removeJavaFieldFromParent(oldValue, affectedEObject)
-}
-
-reaction UmlPropertyRemovedFromDataType {
-	after element uml::Property removed from uml::DataType[ownedAttribute]
-	call removeJavaFieldFromParent(oldValue, affectedEObject)
-}
-
-routine removeJavaFieldFromParent(uml::Property umlProperty, uml::Classifier umlClassifier) {
-	match {
-		val javaField = retrieve java::Field corresponding to umlProperty
-		val javaClassifier = retrieve java::ConcreteClassifier corresponding to umlClassifier
-		val javaGetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.GETTER
-		val javaSetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.SETTER
-	}
-	action {
-		update javaClassifier {
-			javaClassifier.members -= javaField
-			javaGetter.ifPresent [ javaClassifier.members -= it ]
-			javaSetter.ifPresent [ javaClassifier.members -= it ]
-		}
-	}
+    match {
+        val javaField = retrieve java::Field corresponding to umlProperty
+        val javaClassifier = retrieve java::ConcreteClassifier corresponding to umlClassifier
+        val javaGetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlJavaCorrespondenceTag.GETTER
+        val javaSetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlJavaCorrespondenceTag.SETTER
+    }
+    action {
+        update javaClassifier {
+            javaClassifier.members += javaField
+            javaGetter.ifPresent [ javaClassifier.members += it ]
+            javaSetter.ifPresent [ javaClassifier.members += it ]
+        }
+    }
 }
 
 reaction UmlAttributeDeleted {
@@ -128,15 +109,26 @@ reaction UmlAttributeDeleted {
 routine deleteJavaField(uml::Property umlProperty) {
     match {
         val javaField = retrieve java::Field corresponding to umlProperty
-        val javaGetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.GETTER
-        val javaSetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlToJavaTag.SETTER
+        val javaGetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlJavaCorrespondenceTag.GETTER
+        val javaSetter = retrieve optional java::ClassMethod corresponding to umlProperty tagged with UmlJavaCorrespondenceTag.SETTER
 
     }
     action {
         delete javaField
-        delete javaGetter?.get
-        delete javaSetter?.get
+        call {
+        	deleteJavaAccessor(umlProperty, UmlJavaCorrespondenceTag.GETTER)
+        	deleteJavaAccessor(umlProperty, UmlJavaCorrespondenceTag.SETTER)
+        }
     }
+}
+
+routine deleteJavaAccessor(uml::Property umlProperty, String tag) {
+	match {
+		val javaAccessor = retrieve java::ClassMethod corresponding to umlProperty tagged with tag
+	}
+	action {
+		delete javaAccessor
+	}
 }
 
 reaction UmlAttributeMadeFinal {
@@ -152,6 +144,23 @@ routine setJavaAttributeFinal(uml::Property umlAttr) {
         update jAttr {
             jAttr.final = umlAttr.readOnly
         }
+    }
+}
+
+reaction UmlAttributeMadeStatic {
+    after attribute replaced at uml::Property[isStatic]
+    call setStatic(affectedEObject)
+}
+
+routine setStatic(uml::Property umlAttr) {
+    match {
+        val jAttr = retrieve java::Field corresponding to umlAttr tagged with ""
+    }
+    action {
+        update jAttr {
+            jAttr.static = umlAttr.isStatic
+        }
+        //TODO: updating the static property of a java field requires an update of its corresponding accessors
     }
 }
 
@@ -176,14 +185,14 @@ routine changeJavaAttributeType(uml::Property uAttribute) {
     match {
         val jAttribute = retrieve java::Field corresponding to uAttribute
         val jCustomType = retrieve optional java::ConcreteClassifier corresponding to uAttribute.type
-        val jGetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlToJavaTag.GETTER
-        val jSetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlToJavaTag.SETTER
+        val jGetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlJavaCorrespondenceTag.GETTER
+        val jSetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlJavaCorrespondenceTag.SETTER
     }
     action {
         call {
-        	umlToJavaTypePropagation.propagatePropertyTypeChanged(uAttribute, jAttribute, jCustomType.orElse(null))
-		    jGetter.ifPresent [ updateAttributeTypeInGetter(it, jAttribute) ]
-		    jSetter.ifPresent [ updateAttributeTypeInSetter(it, jAttribute) ]
+            umlToJavaTypePropagation.propagatePropertyTypeChanged(uAttribute, jAttribute, jCustomType.orElse(null))
+            jGetter.ifPresent [ updateAttributeTypeInGetter(it, jAttribute) ]
+            jSetter.ifPresent [ updateAttributeTypeInSetter(it, jAttribute) ]
         }
     }
 }
@@ -194,9 +203,9 @@ routine createOrFindJavaGetter(uml::Property uAttribute, java::Field jAttribute)
         call {
             var javaGetter = getJavaGettersOfAttribute(jAttribute).head
             if (javaGetter === null) {
-            	javaGetter = createGetterForAttribute(jAttribute)
+                javaGetter = createGetterForAttribute(jAttribute)
             }
-            createAccessorCorrespondence(uAttribute, javaGetter, UmlToJavaTag.GETTER)
+            createAccessorCorrespondence(uAttribute, javaGetter, UmlJavaCorrespondenceTag.GETTER)
         }
     }
 }
@@ -206,17 +215,17 @@ routine createOrFindJavaSetter(uml::Property uAttribute, java::Field jAttribute)
         call {
             var javaSetter = getJavaSettersOfAttribute(jAttribute).head
             if (javaSetter === null) {
-            	javaSetter = createSetterForAttribute(jAttribute)
+                javaSetter = createSetterForAttribute(jAttribute)
             }
-            createAccessorCorrespondence(uAttribute, javaSetter, UmlToJavaTag.SETTER)
+            createAccessorCorrespondence(uAttribute, javaSetter, UmlJavaCorrespondenceTag.SETTER)
         }
     }
 }
 
 routine createAccessorCorrespondence(uml::Property uAttribute, java::ClassMethod jMethod, String tag) {
-	action {
-		add correspondence between uAttribute and jMethod tagged with tag
-	}
+    action {
+        add correspondence between uAttribute and jMethod tagged with tag
+    }
 }
 
 reaction UmlAttributeRenamed {
@@ -227,8 +236,8 @@ reaction UmlAttributeRenamed {
 routine renameJavaAttribute(String newName, String oldName, uml::Property uAttribute) {
     match {
         val jAttribute = retrieve java::Field corresponding to uAttribute
-        val jGetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlToJavaTag.GETTER
-        val jSetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlToJavaTag.SETTER
+        val jGetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlJavaCorrespondenceTag.GETTER
+        val jSetter = retrieve optional java::ClassMethod corresponding to uAttribute tagged with UmlJavaCorrespondenceTag.SETTER
     }
     action {
         call {
@@ -240,7 +249,7 @@ routine renameJavaAttribute(String newName, String oldName, uml::Property uAttri
 }
 
 reaction UmlAttributeCreatedInInterface {
-    after element uml::Property created and inserted in uml::Interface[ownedAttribute]
+    after element uml::Property inserted in uml::Interface[ownedAttribute]
     call showMessage(userInteractor, "We do not support adding attributes to interfaces. Please delete " + newValue + " from " + affectedEObject)
 }
 

@@ -2,11 +2,10 @@ package tools.vitruv.applications.external.umljava.tests.uml2java.modelmatchchal
 
 import java.nio.file.Path
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.emftext.language.java.containers.CompilationUnit
-import org.junit.jupiter.api.Tag
+import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
-import tools.vitruv.domains.java.util.JavaPersistenceHelper
 
 /**
  * A test suite mimicking the tests described in 
@@ -14,78 +13,66 @@ import tools.vitruv.domains.java.util.JavaPersistenceHelper
  * @author Jan Wittler
  */
 abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
-	@Test
-	def testMove() {
-		testModels("MoveElement")
-	}
-	
-	@Test
-	def testRename() {
-		testModels("RenameElement")
-	}
-	
-	@Test
-	def testMoveRenamed() {
-		testModels("MoveRenamedElement")
-	}
-	
-	@Tag(CUSTOM_INITIAL_MODEL_TAG)
-	@Test
-	def testExchangeElements() {
-		preloadModel(resourcesDirectory.resolve("tests/ExchangeElements/Base/Base.uml"))
-		
-		testModels("ExchangeElements")
-	}
-	
-	@Test
-	def testUpdateReferenceTarget() {
-		testModels("UpdateReferenceTarget")
-	}
-	
-	override resourcesDirectory() {
-		super.resourcesDirectory.resolve("ModelMatchChallenge")
-	}
-	
-	override enrichJavaModel(Path preloadedModelPath) {
-		if (preloadedModelPath.contains(Path.of("ExchangeElements"))) {
-			enrichExchangeElementsJavaModel
-		}
-		else {
-			enrichDefaultJavaModel
-		}
-	}
-	
-	private def enrichDefaultJavaModel() {
-		val javaFilePath = testProjectFolder
-			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de"]))
-		resourceAt(javaFilePath).record [
-			val jCompilationUnit = contents.head as CompilationUnit
-			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
-			EcoreUtil.remove(jClassMethod)
-		]
-		propagate
-	}
-	
-	private def enrichExchangeElementsJavaModel() {
-		val javaFilePath1 = testProjectFolder
-			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimal.java", #["de", "shop"]))
-		resourceAt(javaFilePath1).record [
-			val jCompilationUnit = contents.head as CompilationUnit
-			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
-			jClassMethod.name = "changeSpecies"
-		]
-		propagate
-		
-		val javaFilePath2 = testProjectFolder
-			.resolve(JavaPersistenceHelper.buildJavaFilePath("DomesticAnimalNew.java", #["de", "core"]))
-		resourceAt(javaFilePath2).record [
-			val jCompilationUnit = contents.head as CompilationUnit
-			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.filter [ name == "setSpecies" ].head
-			jClassMethod.name = "adjustSpecies"
-		]
-		propagate
-	}
+    @Test
+    def testMove() {
+        testModelInDirectory("MoveElement")
+    }
+
+    @Test
+    def testRename() {
+        testModelInDirectory("RenameElement")
+    }
+
+    @Test
+    def testMoveRenamed() {
+        testModelInDirectory("MoveRenamedElement")
+    }
+
+    @Test
+    def testExchangeElements() {
+        testModelInDirectory("ExchangeElements")
+    }
+
+    @Test
+    def testUpdateReferenceTarget() {
+        testModelInDirectory("UpdateReferenceTarget")
+    }
+
+    override resourcesDirectory() {
+        super.resourcesDirectory.resolve("ModelMatchChallenge")
+    }
+
+    override initialModelPath(TestInfo testInfo) {
+        if (testInfo.displayName == "testExchangeElements()") {
+            return resourcesDirectory.resolve("tests/ExchangeElements/Base/Base.uml")
+        }
+        return super.initialModelPath(testInfo)
+    }
+
+    override extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        if (preloadedModelPath.contains(Path.of("ExchangeElements"))) {
+            extendExchangeElementsJavaModel(javaClassifierProvider)
+        } else {
+            extendDefaultJavaModel(javaClassifierProvider)
+        }
+    }
+
+    private def extendDefaultJavaModel((Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        javaClassifierProvider.apply(#["de"], "DomesticAnimal").propagate [
+            val speciesSetter = methods.filter [name == "setSpecies" ].head
+            EcoreUtil.delete(speciesSetter)
+        ]
+    }
+
+    private def extendExchangeElementsJavaModel((Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider) {
+        javaClassifierProvider.apply(#["de", "shop"], "DomesticAnimal").propagate [
+            val speciesSetter = methods.filter [ name == "setSpecies"].head
+            EcoreUtil.delete(speciesSetter)
+        ]
+
+        javaClassifierProvider.apply(#["de", "core"], "DomesticAnimalNew").propagate [
+            val nicknameSetter = methods.filter [name == "setNickname" ].head
+            EcoreUtil.delete(nicknameSetter)
+        ]
+    }
 }

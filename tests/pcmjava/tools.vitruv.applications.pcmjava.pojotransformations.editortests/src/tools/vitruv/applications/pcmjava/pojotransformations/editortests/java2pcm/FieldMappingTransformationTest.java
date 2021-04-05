@@ -3,8 +3,6 @@ package tools.vitruv.applications.pcmjava.pojotransformations.editortests.java2p
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.emf.ecore.EObject;
@@ -22,7 +20,6 @@ import org.palladiosimulator.pcm.repository.OperationRequiredRole;
 
 import tools.vitruv.applications.pcmjava.tests.util.java2pcm.CompilationUnitManipulatorHelper;
 import tools.vitruv.applications.pcmjava.tests.util.pcm2java.Pcm2JavaTestUtils;
-import tools.vitruv.framework.correspondence.CorrespondenceModelUtil;
 import static edu.kit.ipd.sdq.commons.util.java.lang.IterableUtil.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,32 +70,26 @@ public class FieldMappingTransformationTest extends Java2PcmPackageMappingTransf
 		this.assertInnerDeclaration(newInnerDeclaration, newFieldTypeName, fieldName);
 	}
 
-	@Disabled
+	@Disabled("Not yet implemented")
 	@Test
 	public void testRemoveFieldInClassThatCorrespondsToBasicComponent() {
-		fail("Not yet implemented");
 	}
 
-	@Disabled
+	@Disabled("Not yet implemented")
 	@Test
 	public void testAddFieldToClassThatCorrespondsToBasicComponent() {
-		fail("Not yet implemented");
 	}
 
-	@Disabled
+	@Disabled("Not yet implemented")
 	@Test
 	public void testAddFieldInClassWithoutCorrespondence() {
-		fail("Not yet implemented");
 	}
 
-	@Disabled
 	@Test
 	public void testAddFieldWithTypeOfInterface() throws Throwable {
 		this.createRepoBasicComponentAndInterface();
 
-		// create required role from Pcm2JavaTestUtils.BASIC_COMPONENT_NAME +
-		// "Requiring" to
-		// Interface
+		// create required role from Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Requiring" to Interface
 		final OperationRequiredRole orrToInterface = this.addFieldToClassWithName(
 				Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Requiring" + "Impl", Pcm2JavaTestUtils.INTERFACE_NAME,
 				"i" + Pcm2JavaTestUtils.INTERFACE_NAME, OperationRequiredRole.class);
@@ -110,8 +101,7 @@ public class FieldMappingTransformationTest extends Java2PcmPackageMappingTransf
 	public void testAddFieldWithTypeOfBasicComponentToClass() throws Throwable {
 		this.createRepoBasicComponentAndInterface();
 
-		// create required role from Pcm2JavaTestUtils.BASIC_COMPONENT_NAME +
-		// "Requiring" to
+		// create required role from Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Requiring" to
 		// Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Providing"
 		final OperationRequiredRole orrToInterface = this.addFieldToClassWithName(
 				Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Requiring" + "Impl",
@@ -130,41 +120,24 @@ public class FieldMappingTransformationTest extends Java2PcmPackageMappingTransf
 		// create interface
 		super.createInterfaceInPackageBasedOnJaMoPPPackageWithCorrespondence("contracts",
 				Pcm2JavaTestUtils.INTERFACE_NAME);
-		// create provided role from providing compontent to interface
+		// create provided role from providing component to interface
 		super.addImplementsCorrespondingToOperationProvidedRoleToClass(
 				Pcm2JavaTestUtils.BASIC_COMPONENT_NAME + "Providing" + "Impl", Pcm2JavaTestUtils.INTERFACE_NAME);
 	}
 
 	private void assertOperationRequiredRole(final OperationRequiredRole operationRequiredRole) throws Throwable {
-		this.getVirtualModel().executeCommand(new Callable<Void>() {
+		Iterable<EObject> correspondingEObjects = getCorrespondingEObjects(operationRequiredRole, EObject.class);
 
-			@Override
-			public Void call() throws Exception {
-				Set<EObject> correspondingEObjects;
-				try {
-					correspondingEObjects = CorrespondenceModelUtil.getCorrespondingEObjects(
-							FieldMappingTransformationTest.this.getCorrespondenceModel(), operationRequiredRole);
-
-					boolean fieldFound = false;
-					for (final EObject correspondingEObject : correspondingEObjects) {
-						if (correspondingEObject instanceof Field) {
-							fieldFound = true;
-						} else {
-							fail("OperationRequiredRole should correspond to field only, but corresonds also to: "
-									+ correspondingEObject);
-						}
-					}
-					assertTrue(fieldFound, "OperationRequiredRole does not correspond to a field");
-				} catch (final Throwable e) {
-					if (e instanceof Exception) {
-						throw (Exception) e;
-					}
-					throw new RuntimeException(e);
-				}
-				return null;
+		boolean fieldFound = false;
+		for (final EObject correspondingEObject : correspondingEObjects) {
+			if (correspondingEObject instanceof Field) {
+				fieldFound = true;
+			} else {
+				fail("OperationRequiredRole should correspond to field only, but corresonds also to: "
+						+ correspondingEObject);
 			}
-		});
-
+		}
+		assertTrue(fieldFound, "OperationRequiredRole does not correspond to a field");
 	}
 
 	private InnerDeclaration renameFieldInClass(final String className, final String fieldName,
@@ -183,8 +156,7 @@ public class FieldMappingTransformationTest extends Java2PcmPackageMappingTransf
 		final InsertEdit insertEdit = new InsertEdit(offset, newFieldName + ";");
 		editCompilationUnit(icu, deleteEdit, insertEdit);
 		final Field newJaMoPPField = this.getJaMoPPFieldFromClass(icu, newFieldName);
-		return claimOne(CorrespondenceModelUtil.getCorrespondingEObjectsByType(this.getCorrespondenceModel(),
-				newJaMoPPField, InnerDeclaration.class));
+		return claimOne(getCorrespondingEObjects(newJaMoPPField, InnerDeclaration.class));
 	}
 
 	private InnerDeclaration changeFieldTypeInClass(final String className, final String fieldName,
@@ -201,8 +173,7 @@ public class FieldMappingTransformationTest extends Java2PcmPackageMappingTransf
 		final InsertEdit insertEdit = new InsertEdit(offset, newFieldTypeName);
 		editCompilationUnit(icu, deleteEdit, insertEdit);
 		final Field newJaMoPPField = this.getJaMoPPFieldFromClass(icu, fieldName);
-		return claimOne(CorrespondenceModelUtil.getCorrespondingEObjectsByType(this.getCorrespondenceModel(),
-				newJaMoPPField, InnerDeclaration.class));
+		return claimOne(getCorrespondingEObjects(newJaMoPPField, InnerDeclaration.class));
 	}
 
 	private void assertInnerDeclaration(final InnerDeclaration innerDeclaration, final String fieldType,

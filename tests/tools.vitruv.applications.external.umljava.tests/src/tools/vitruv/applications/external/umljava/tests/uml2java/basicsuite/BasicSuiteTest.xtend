@@ -1,78 +1,113 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.basicsuite
 
-import org.emftext.language.java.containers.CompilationUnit
+import java.nio.file.Path
+import org.eclipse.emf.ecore.util.EcoreUtil
+import org.emftext.language.java.classifiers.ConcreteClassifier
+import org.emftext.language.java.expressions.ExpressionsFactory
 import org.emftext.language.java.literals.LiteralsFactory
 import org.emftext.language.java.members.ClassMethod
+import org.emftext.language.java.members.Field
+import org.emftext.language.java.operators.OperatorsFactory
+import org.emftext.language.java.references.ReferencesFactory
 import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
-import tools.vitruv.domains.java.util.JavaPersistenceHelper
-import java.nio.file.Path
 
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
-	@Test
-	def testAddClass() {
-		testModels("AddClass")
-	}
-	
-	@Test
-	def testRemoveClass() {
-		testModels("RemoveClass")
-	}
-	
-	@Test
-	def testRenameClass() {
-		testModels("RenameClass")
-	}
-	
-	@Test
-	def testMoveClassEasy() {
-		testModels("MoveClassEasy")
-	}
-	
-	@Test
-	def testMoveClassHard() {
-		testModels("MoveClassHard")
-	}
-	
-	@Test
-	def testAddAttribute() {
-		testModels("AddAttribute")
-	}
-	
-	@Test
-	def testRemoveAttribute() {
-		testModels("RemoveAttribute")
-	}
-	
-	@Test
-	def testRenameAttribute() {
-		testModels("RenameAttribute")
-	}
-	
-	@Test
-	def testRenameMethod() {
-		testModels("RenameMethod")
-	}
-	
-	override resourcesDirectory() {
-		super.resourcesDirectory.resolve("BasicSuite")
-	}
-	
-	override enrichJavaModel(Path preloadedModelPath) {
-		val javaFilePath = testProjectFolder
-			.resolve(JavaPersistenceHelper.buildJavaFilePath("Example.java", #["com.example.first"]))
-		resourceAt(javaFilePath).record [
-			val jCompilationUnit = contents.head as CompilationUnit
-			val jClass = jCompilationUnit.classifiers.head
-			val jClassMethod = jClass.members.filter [ name == "nameEquals" ].head as ClassMethod
-			
-			val jStatement = StatementsFactory.eINSTANCE.createReturn()
-			val jBool = LiteralsFactory.eINSTANCE.createBooleanLiteral()
-			jBool.value = false
-			jStatement.returnValue = jBool
-			jClassMethod.statements.add(jStatement)
-		]
-		propagate
-	}
+    @Test
+    def testAddClass() {
+        testModelInDirectory("AddClass")
+    }
+
+    @Test
+    def testRemoveClass() {
+        testModelInDirectory("RemoveClass")
+    }
+
+    @Test
+    def testRenameClass() {
+        testModelInDirectory("RenameClass")
+    }
+
+    @Test
+    def testMoveClassEasy() {
+        testModelInDirectory("MoveClassEasy")
+    }
+
+    @Test
+    def testMoveClassHard() {
+        testModelInDirectory("MoveClassHard")
+    }
+
+    @Test
+    def testAddAttribute() {
+        testModelInDirectory("AddAttribute")
+    }
+
+    @Test
+    def testRemoveAttribute() {
+        testModelInDirectory("RemoveAttribute")
+    }
+
+    @Test
+    def testRenameAttribute() {
+        testModelInDirectory("RenameAttribute")
+    }
+
+    @Test
+    def testMoveAttribute() {
+        testModelInDirectory("MoveAttribute")
+    }
+
+    @Test
+    def testAddMethod() {
+        testModelInDirectory("AddMethod")
+    }
+
+    @Test
+    def testRemoveMethod() {
+        testModelInDirectory("RemoveMethod")
+    }
+
+    @Test
+    def testRenameMethod() {
+        testModelInDirectory("RenameMethod")
+    }
+
+    @Test
+    def testMoveMethod() {
+        testModelInDirectory("MoveMethod")
+    }
+
+    override resourcesDirectory() {
+        super.resourcesDirectory.resolve("BasicSuite")
+    }
+
+    override extendJavaModel(Path preloadedModelPath, (Iterable<String>, String) => ConcreteClassifier javaClassifierProvider) { 
+        javaClassifierProvider.apply(#["com.example.first"], "Example").propagate [
+            val setName = methods.filter [ name == "setName" ].head
+            EcoreUtil.delete(setName)
+
+            val method = methods.filter(ClassMethod).filter [ name == "nameEquals"].head
+            // return this.name == otherName;
+            val jParamRef = ReferencesFactory.eINSTANCE.createIdentifierReference
+            jParamRef.target = method.parameters.head
+
+            val selfReference = ReferencesFactory.eINSTANCE.createSelfReference
+            selfReference.self = LiteralsFactory.eINSTANCE.createThis
+            val jField = containingConcreteClassifier.members.filter(Field).filter [ name == "name" ].head
+            val fieldReference = ReferencesFactory.eINSTANCE.createIdentifierReference
+            fieldReference.target = jField
+            selfReference.next = fieldReference
+
+            val jComparison = ExpressionsFactory.eINSTANCE.createEqualityExpression
+            jComparison.children += selfReference
+            jComparison.equalityOperators += OperatorsFactory.eINSTANCE.createEqual
+            jComparison.children += jParamRef
+
+            val jStatement = StatementsFactory.eINSTANCE.createReturn
+            jStatement.returnValue = jComparison
+            method.statements.add(jStatement)
+        ]
+    }
 }
