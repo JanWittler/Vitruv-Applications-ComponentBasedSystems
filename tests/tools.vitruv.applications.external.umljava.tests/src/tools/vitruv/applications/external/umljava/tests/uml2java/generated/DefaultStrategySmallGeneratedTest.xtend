@@ -1,10 +1,10 @@
 package tools.vitruv.applications.external.umljava.tests.uml2java.generated
 
-import tools.vitruv.applications.external.strategies.SimilarityBasedDifferencesProvider
 import tools.vitruv.applications.external.umljava.tests.uml2java.generated.SmallGeneratedTest
+import tools.vitruv.applications.external.strategies.DefaultStateBasedDifferencesProvider
 
-class BasicSimilarityBasedSmallGeneratedTest extends SmallGeneratedTest {
+class DefaultStrategySmallGeneratedTest extends SmallGeneratedTest {
     override getDifferencesProvider() {
-        return new SimilarityBasedDifferencesProvider
+        return new DefaultStateBasedDifferencesProvider
     }
 }
