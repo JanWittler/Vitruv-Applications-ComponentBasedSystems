@@ -1,5 +1,6 @@
 package tools.vitruv.applications.external.strategies
 
+import com.google.common.collect.Lists
 import com.google.common.collect.Sets
 import java.util.regex.Pattern
 import org.eclipse.emf.common.notify.Notifier
@@ -14,7 +15,7 @@ import org.eclipse.emf.compare.postprocessor.PostProcessorDescriptorRegistryImpl
 import org.eclipse.emf.compare.rcp.EMFCompareRCPPlugin
 import org.eclipse.emf.compare.scope.DefaultComparisonScope
 import org.eclipse.emf.compare.utils.UseIdentifiers
-import org.eclipse.emf.common.util.EList
+import org.eclipse.emf.ecore.EObject
 
 class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
     override getDifferences(Notifier newState, Notifier oldState) {
@@ -25,7 +26,7 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         matchEngineFactory.ranking = 20 // default engine ranking is 10, must be higher to override.
         registry.add(matchEngineFactory)
 
-        val customPostProcessor = new CustomPostProcessor()
+        val customPostProcessor = new DeleteReductionPostProcessor(false, [eClass.name != "Association"])
         val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile("http://www.eclipse.org/uml2/\\d\\.0\\.0/UML"), null);
 
         val postRegistry = new PostProcessorDescriptorRegistryImpl();
@@ -39,38 +40,73 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         return comparison.differences
     }
 
-    static class CustomPostProcessor implements IPostProcessor {
-        override postMatch(Comparison comparison, Monitor monitor) {
-            comparison.matches.matchUnmatchedRecursively
+    static class DeleteReductionPostProcessor implements IPostProcessor {
+        val boolean adjustMatchesRecursively
+        val (EObject)=>boolean eObjectFilter
+
+        new(boolean adjustMatchesRecursively) {
+            this(adjustMatchesRecursively, [true])
         }
 
-        private def void matchUnmatchedRecursively(EList<Match> matches) {
-            val groupedMatches = matches.groupBy[left === null || right === null]
-            val unmatched = groupedMatches.get(true)
-            if (unmatched !== null && unmatched.length > 1) {
-                val groupedUnmatched = unmatched.groupBy[left === null]
-                val leftMatched = groupedUnmatched.get(false)
-                val rightMatched = groupedUnmatched.get(true)
-                if (leftMatched !== null && rightMatched !== null) {
-                    matches.adjustMatches(leftMatched, rightMatched)
+        new(boolean adjustMatchesRecursively, (EObject)=>boolean eObjectFilter) {
+            this.adjustMatchesRecursively = adjustMatchesRecursively
+            this.eObjectFilter = eObjectFilter
+        }
+
+        override postMatch(Comparison comparison, Monitor monitor) {
+            comparison.adjustMatches(comparison.matches)
+        }
+
+        private def Iterable<Match> extractAllIncompleteMatches(Iterable<Match> matches) {
+            val incompleteMatches = Lists.newLinkedList
+            val iterator = matches.iterator
+            while (iterator.hasNext) {
+                val match = iterator.next
+                if (match.left === null || match.right === null) {
+                    incompleteMatches += match
+                }
+                else {
+                    val incompleteSubmatches = match.submatches.extractAllIncompleteMatches
+                    if (!incompleteSubmatches.empty) {
+                        incompleteMatches += incompleteSubmatches
+                    }
                 }
             }
-            val matched = groupedMatches.get(false)
-            matched?.forEach[matchUnmatchedRecursively(submatches)]
+            return incompleteMatches
         }
 
-        private def void adjustMatches(EList<Match> container, Iterable<Match> leftMatched, Iterable<Match> rightMatched) {
-            val leftUnmatchedEObjects = rightMatched.map[right]
+        private def void adjustMatches(Comparison comparison, Iterable<Match> matches) {
+            val incompleteMatches = matches.extractAllIncompleteMatches
+            val groupedIncompleteMatches = incompleteMatches.groupBy[left === null]
+            val leftMatched = groupedIncompleteMatches.get(false)?.filter[eObjectFilter.apply(left)]
+            val rightMatched = groupedIncompleteMatches.get(true)?.filter[eObjectFilter.apply(right)]
+            if (leftMatched !== null && rightMatched !== null) {
+                comparison.adjustMatches(leftMatched, rightMatched)
+            }
+        }
+
+        private def void adjustMatches(Comparison comparison, Iterable<Match> leftMatched, Iterable<Match> rightMatched) {
+            var leftUnmatchedEObjects = Sets.newHashSet(rightMatched.map[right])
+            var matchesToProcess = Lists.newLinkedList
             for (match: leftMatched) {
                 val submatchContainers = Sets.newHashSet(match.submatches.map [ right?.eContainer ].filterNull)
                 if (submatchContainers.size === 1 && leftUnmatchedEObjects.contains(submatchContainers.get(0))) {
-                    val matchedRight = submatchContainers.get(0)
-                    val unmatchedLeft = rightMatched.filter[right === matchedRight].head
-                    container -= unmatchedLeft
-                    match.right = matchedRight
-                    match.submatches += unmatchedLeft.submatches
+                    val rightEObject = submatchContainers.get(0)
+                    val rightMatch = rightMatched.filter[right === rightEObject].head
+                    match.right = rightEObject
+                    if (!rightMatch.submatches.empty) {
+                        match.submatches += rightMatch.submatches
+                        matchesToProcess += match
+                    }
+                    if (rightMatch.eContainer instanceof Match) {
+                        (rightMatch.eContainer as Match).submatches -= rightMatch
+                    }
                     println("changed match " + match)
+                    leftUnmatchedEObjects -= rightEObject
                 }
+            }
+            if (adjustMatchesRecursively) {
+                matchesToProcess.forEach [comparison.adjustMatches(submatches)]
             }
         }
 
