@@ -22,7 +22,7 @@ import tools.vitruv.domains.uml.UmlDomainProvider
  */
 abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
     override initialModelPath(TestInfo testInfo) {
-        return resourcesDirectory.resolve("Base.uml")
+        return resourcesDirectory.resolve("Model.uml")
     }
 
     override preloadModel(Path path) {

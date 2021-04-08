@@ -44,7 +44,7 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
 
     override initialModelPath(TestInfo testInfo) {
         if (testInfo.displayName == "testExchangeElements()") {
-            return resourcesDirectory.resolve("tests/ExchangeElements/Base/Base.uml")
+            return resourcesDirectory.resolve("tests/ExchangeElements/Base/Model.uml")
         }
         return super.initialModelPath(testInfo)
     }
