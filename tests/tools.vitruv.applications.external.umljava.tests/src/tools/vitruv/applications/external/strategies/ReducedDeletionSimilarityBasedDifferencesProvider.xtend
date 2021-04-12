@@ -27,7 +27,7 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         registry.add(matchEngineFactory)
 
         val customPostProcessor = new DeleteReductionPostProcessor(true, [eClass.name != "Association"])
-        val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile("http://www.eclipse.org/uml2/\\d\\.0\\.0/UML"), null);
+        val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile(".*", Pattern.DOTALL), null);
 
         val postRegistry = new PostProcessorDescriptorRegistryImpl();
         postRegistry.put("CustomPostProcessor", descriptor);
