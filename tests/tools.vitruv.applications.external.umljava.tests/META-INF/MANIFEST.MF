@@ -15,5 +15,6 @@ Require-Bundle: org.junit.jupiter.api,
  edu.kit.ipd.sdq.activextendannotations,
  org.eclipse.emf.compare;bundle-version="3.5.3",
  org.eclipse.emf.compare.rcp;bundle-version="2.5.2",
- org.custommonkey.xmlunit;bundle-version="[1.3.0,2.0.0)"
+ org.custommonkey.xmlunit;bundle-version="[1.3.0,2.0.0)",
+ org.junit.jupiter.params
 Bundle-Vendor: vitruv.tools

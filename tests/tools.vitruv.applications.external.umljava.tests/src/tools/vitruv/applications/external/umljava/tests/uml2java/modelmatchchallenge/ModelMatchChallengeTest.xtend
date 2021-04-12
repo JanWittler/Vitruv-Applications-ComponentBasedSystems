@@ -5,6 +5,8 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 
 /**
@@ -13,18 +15,24 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBa
  * @author Jan Wittler
  */
 abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
-    @Test
-    def testMove() {
+    @ParameterizedTest(name='{0}')
+    @ValueSource(strings = #["Model", "Model_noAssociations"])
+    def testMove(String modelName) {
+        this.modelName = modelName
         testModelInDirectory("MoveElement")
     }
 
-    @Test
-    def testRename() {
+    @ParameterizedTest(name='{0}')
+    @ValueSource(strings = #["Model", "Model_noAssociations"])
+    def testRename(String modelName) {
+        this.modelName = modelName
         testModelInDirectory("RenameElement")
     }
 
-    @Test
-    def testMoveRenamed() {
+    @ParameterizedTest(name='{0}')
+    @ValueSource(strings = #["Model", "Model_noAssociations"])
+    def testMoveRenamed(String modelName) {
+        this.modelName = modelName
         testModelInDirectory("MoveRenamedElement")
     }
 
@@ -33,8 +41,10 @@ abstract class ModelMatchChallengeTest extends Uml2JavaStateBasedChangeTest {
         testModelInDirectory("ExchangeElements")
     }
 
-    @Test
-    def testUpdateReferenceTarget() {
+    @ParameterizedTest(name='{0}')
+    @ValueSource(strings = #["Model", "Model_noAssociations"])
+    def testUpdateReferenceTarget(String modelName) {
+        this.modelName = modelName
         testModelInDirectory("UpdateReferenceTarget")
     }
 
