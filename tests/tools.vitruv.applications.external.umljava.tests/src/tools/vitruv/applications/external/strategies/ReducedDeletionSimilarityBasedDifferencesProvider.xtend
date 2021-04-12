@@ -2,6 +2,7 @@ package tools.vitruv.applications.external.strategies
 
 import com.google.common.collect.Lists
 import com.google.common.collect.Sets
+import java.util.EnumSet
 import java.util.regex.Pattern
 import org.eclipse.emf.common.notify.Notifier
 import org.eclipse.emf.common.util.Monitor
@@ -18,6 +19,25 @@ import org.eclipse.emf.compare.utils.UseIdentifiers
 import org.eclipse.emf.ecore.EObject
 
 class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
+    enum Option {
+        ADJUST_RECURSIVELY, AGGRESSIVE_MERGING
+    }
+    val EnumSet<Option> options
+    val (EObject)=>boolean eObjectFilter
+
+    new() {
+        this([true])
+    }
+
+    new((EObject)=>boolean eObjectFilter) {
+        this(EnumSet.of(Option.ADJUST_RECURSIVELY, Option.AGGRESSIVE_MERGING), eObjectFilter)
+    }
+
+    new(EnumSet<Option> options, (EObject)=>boolean eObjectFilter) {
+        this.options = options
+        this.eObjectFilter = eObjectFilter
+    }
+
     override getDifferences(Notifier newState, Notifier oldState) {
         val scope = new DefaultComparisonScope(newState, oldState, null)
 
@@ -26,7 +46,10 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         matchEngineFactory.ranking = 20 // default engine ranking is 10, must be higher to override.
         registry.add(matchEngineFactory)
 
-        val customPostProcessor = new DeleteReductionPostProcessor(true, [eClass.name != "Association"])
+        val adjustMatchesRecursively = options.contains(Option.ADJUST_RECURSIVELY)
+        val mergeLeaves = options.contains(Option.AGGRESSIVE_MERGING)
+
+        val customPostProcessor = new DeleteReductionPostProcessor(adjustMatchesRecursively, mergeLeaves, eObjectFilter)
         val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile(".*", Pattern.DOTALL), null);
 
         val postRegistry = new PostProcessorDescriptorRegistryImpl();
@@ -40,16 +63,14 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         return comparison.differences
     }
 
-    static class DeleteReductionPostProcessor implements IPostProcessor {
+    private static class DeleteReductionPostProcessor implements IPostProcessor {
         val boolean adjustMatchesRecursively
+        val boolean mergeLeaves
         val (EObject)=>boolean eObjectFilter
 
-        new(boolean adjustMatchesRecursively) {
-            this(adjustMatchesRecursively, [true])
-        }
-
-        new(boolean adjustMatchesRecursively, (EObject)=>boolean eObjectFilter) {
+        new(boolean adjustMatchesRecursively, boolean mergeLeaves, (EObject)=>boolean eObjectFilter) {
             this.adjustMatchesRecursively = adjustMatchesRecursively
+            this.mergeLeaves = mergeLeaves
             this.eObjectFilter = eObjectFilter
         }
 
@@ -118,7 +139,7 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
                 }
             }
             if (adjustMatchesRecursively) {
-                adjustRecursivelyMatches.forEach [adjustMatches(submatches, true)]
+                adjustRecursivelyMatches.forEach [adjustMatches(submatches, this.mergeLeaves)]
             }
         }
 
