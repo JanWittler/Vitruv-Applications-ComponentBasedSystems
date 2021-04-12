@@ -13,6 +13,7 @@ import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
 import tools.vitruv.domains.uml.UmlDomainProvider
+import org.junit.jupiter.api.AfterEach
 
 /**
  * The basic test class for UML to Java state based change tests.
@@ -21,8 +22,10 @@ import tools.vitruv.domains.uml.UmlDomainProvider
  * @author Jan Wittler
  */
 abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
+    protected var String modelName = "Model"
+
     override initialModelPath(TestInfo testInfo) {
-        return resourcesDirectory.resolve("Model.uml")
+        return resourcesDirectory.resolve(modelName + ".uml")
     }
 
     override preloadModel(Path path) {
@@ -37,6 +40,11 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
     @BeforeEach
     override patchDomains() {
         new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
+    }
+
+    @AfterEach
+    def void resetModelName() {
+        modelName = "Model"
     }
 
     override protected getChangePropagationSpecifications() {
@@ -61,8 +69,11 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
      * @param directory The directory in which the files to test reside.
      */
     def testModelInDirectory(String directory) {
+        if (!isModelPreloaded) {
+            preloadModel()
+        }
         val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
-        resolveChangedState(testDirectory.resolve("Model.uml"))
+        resolveChangedState(testDirectory.resolve(modelName + ".uml"))
         assertTargetModelEquals(testDirectory.resolve("expected_src"))
     }
 
