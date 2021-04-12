@@ -22,6 +22,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
     enum Option {
         ADJUST_RECURSIVELY, AGGRESSIVE_MERGING
     }
+
     val EnumSet<Option> options
     val (EObject)=>boolean eObjectFilter
 
@@ -75,7 +76,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
         }
 
         override postMatch(Comparison comparison, Monitor monitor) {
-            adjustMatches(comparison.matches, false)
+            adjustMatches(comparison.matches)
         }
 
         private def Iterable<Match> extractAllIncompleteMatches(Iterable<Match> matches) {
@@ -94,7 +95,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             return incompleteMatches
         }
 
-        private def void adjustMatches(Iterable<Match> matches, boolean mergeLeaves) {
+        private def void adjustMatches(Iterable<Match> matches) {
             val incompleteMatches = matches.extractAllIncompleteMatches
             val groupedIncompleteMatches = incompleteMatches.groupBy[left === null]
             val leftMatched = groupedIncompleteMatches.get(false)?.filter[eObjectFilter.apply(left)]
@@ -131,15 +132,12 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
                 val leftMatch = rightUnmatchedMatches.get(0)
                 val rightEObject = leftUnmatchedEObjects.get(0)
                 val rightMatch = rightMatched.filter[right === rightEObject].head
-                val rightHadSubmatches = !rightMatch?.submatches?.empty
-                if (leftMatch.mergeIfMatching(rightMatch)) {
-                    if (rightHadSubmatches) {
-                        adjustRecursivelyMatches += leftMatch
-                    }
+                if (leftMatch.submatches.empty && rightMatch.submatches.empty) {
+                    leftMatch.mergeIfMatching(rightMatch)
                 }
             }
             if (adjustMatchesRecursively) {
-                adjustRecursivelyMatches.forEach [adjustMatches(submatches, this.mergeLeaves)]
+                adjustRecursivelyMatches.forEach [adjustMatches(submatches)]
             }
         }
 
@@ -156,6 +154,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             if (mergeFromRight.eContainer instanceof Match) {
                 (mergeFromRight.eContainer as Match).submatches -= mergeFromRight
             }
+            println("changed match " + mergeIntoLeft)
             return true
         }
 
