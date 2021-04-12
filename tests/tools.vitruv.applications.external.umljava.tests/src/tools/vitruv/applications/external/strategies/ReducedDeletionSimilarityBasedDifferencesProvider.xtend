@@ -26,7 +26,7 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         matchEngineFactory.ranking = 20 // default engine ranking is 10, must be higher to override.
         registry.add(matchEngineFactory)
 
-        val customPostProcessor = new DeleteReductionPostProcessor(false, [eClass.name != "Association"])
+        val customPostProcessor = new DeleteReductionPostProcessor(true, [eClass.name != "Association"])
         val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile("http://www.eclipse.org/uml2/\\d\\.0\\.0/UML"), null);
 
         val postRegistry = new PostProcessorDescriptorRegistryImpl();
@@ -54,7 +54,7 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
         }
 
         override postMatch(Comparison comparison, Monitor monitor) {
-            comparison.adjustMatches(comparison.matches)
+            adjustMatches(comparison.matches, false)
         }
 
         private def Iterable<Match> extractAllIncompleteMatches(Iterable<Match> matches) {
@@ -65,49 +65,77 @@ class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDif
                 if (match.left === null || match.right === null) {
                     incompleteMatches += match
                 }
-                else {
-                    val incompleteSubmatches = match.submatches.extractAllIncompleteMatches
-                    if (!incompleteSubmatches.empty) {
-                        incompleteMatches += incompleteSubmatches
-                    }
+                val incompleteSubmatches = match.submatches.extractAllIncompleteMatches
+                if (!incompleteSubmatches.empty) {
+                    incompleteMatches += incompleteSubmatches
                 }
             }
             return incompleteMatches
         }
 
-        private def void adjustMatches(Comparison comparison, Iterable<Match> matches) {
+        private def void adjustMatches(Iterable<Match> matches, boolean mergeLeaves) {
             val incompleteMatches = matches.extractAllIncompleteMatches
             val groupedIncompleteMatches = incompleteMatches.groupBy[left === null]
             val leftMatched = groupedIncompleteMatches.get(false)?.filter[eObjectFilter.apply(left)]
             val rightMatched = groupedIncompleteMatches.get(true)?.filter[eObjectFilter.apply(right)]
             if (leftMatched !== null && rightMatched !== null) {
-                comparison.adjustMatches(leftMatched, rightMatched)
+                adjustMatches(leftMatched, rightMatched, mergeLeaves)
             }
         }
 
-        private def void adjustMatches(Comparison comparison, Iterable<Match> leftMatched, Iterable<Match> rightMatched) {
+        private def void adjustMatches(Iterable<Match> leftMatched, Iterable<Match> rightMatched, boolean mergeLeaves) {
             var leftUnmatchedEObjects = Sets.newHashSet(rightMatched.map[right])
-            var matchesToProcess = Lists.newLinkedList
+            var rightUnmatchedMatches = Lists.newLinkedList
+            var adjustRecursivelyMatches = Lists.newLinkedList
             for (match: leftMatched) {
+                var matched = false
                 val submatchContainers = Sets.newHashSet(match.submatches.map [ right?.eContainer ].filterNull)
-                if (submatchContainers.size === 1 && leftUnmatchedEObjects.contains(submatchContainers.get(0))) {
+                if (submatchContainers.size === 1) {
                     val rightEObject = submatchContainers.get(0)
                     val rightMatch = rightMatched.filter[right === rightEObject].head
-                    match.right = rightEObject
-                    if (!rightMatch.submatches.empty) {
-                        match.submatches += rightMatch.submatches
-                        matchesToProcess += match
+                    val rightHadSubmatches = !rightMatch?.submatches?.empty
+                    if (match.mergeIfMatching(rightMatch)) {
+                        if (rightHadSubmatches) {
+                            adjustRecursivelyMatches += match
+                        }
+                        leftUnmatchedEObjects -= rightEObject
+                        matched = true
                     }
-                    if (rightMatch.eContainer instanceof Match) {
-                        (rightMatch.eContainer as Match).submatches -= rightMatch
+                }
+                if (!matched) {
+                    rightUnmatchedMatches += match
+                }
+            }
+            if (mergeLeaves && (leftUnmatchedEObjects.size === 1 && rightUnmatchedMatches.size === 1)) {
+                val leftMatch = rightUnmatchedMatches.get(0)
+                val rightEObject = leftUnmatchedEObjects.get(0)
+                val rightMatch = rightMatched.filter[right === rightEObject].head
+                val rightHadSubmatches = !rightMatch?.submatches?.empty
+                if (leftMatch.mergeIfMatching(rightMatch)) {
+                    if (rightHadSubmatches) {
+                        adjustRecursivelyMatches += leftMatch
                     }
-                    println("changed match " + match)
-                    leftUnmatchedEObjects -= rightEObject
                 }
             }
             if (adjustMatchesRecursively) {
-                matchesToProcess.forEach [comparison.adjustMatches(submatches)]
+                adjustRecursivelyMatches.forEach [adjustMatches(submatches, true)]
             }
+        }
+
+        private def mergeIfMatching(Match mergeIntoLeft, Match mergeFromRight) {
+            val left = mergeIntoLeft?.left
+            val right = mergeFromRight?.right
+            if (left === null || right === null || left.eClass != right.eClass) {
+                return false
+            }
+            mergeIntoLeft.right = mergeFromRight.right
+            if (!mergeFromRight.submatches.empty) {
+                mergeIntoLeft.submatches += mergeFromRight.submatches
+            }
+            if (mergeFromRight.eContainer instanceof Match) {
+                (mergeFromRight.eContainer as Match).submatches -= mergeFromRight
+            }
+            return true
         }
 
         override postComparison(Comparison comparison, Monitor monitor) { }
