@@ -18,7 +18,7 @@ import org.eclipse.emf.compare.scope.DefaultComparisonScope
 import org.eclipse.emf.compare.utils.UseIdentifiers
 import org.eclipse.emf.ecore.EObject
 
-class ReducedDeletionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
+class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
     enum Option {
         ADJUST_RECURSIVELY, AGGRESSIVE_MERGING
     }
