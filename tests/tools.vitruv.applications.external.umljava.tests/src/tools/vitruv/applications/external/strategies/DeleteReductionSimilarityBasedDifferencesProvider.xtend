@@ -115,7 +115,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
                 if (submatchContainers.size === 1) {
                     val rightEObject = submatchContainers.get(0)
                     val rightMatch = rightMatched.filter[right === rightEObject].head
-                    val rightHadSubmatches = !rightMatch?.submatches?.empty
+                    val rightHadSubmatches = rightMatch === null ? false : !rightMatch.submatches.empty
                     if (match.mergeIfMatching(rightMatch)) {
                         if (rightHadSubmatches) {
                             adjustRecursivelyMatches += match
