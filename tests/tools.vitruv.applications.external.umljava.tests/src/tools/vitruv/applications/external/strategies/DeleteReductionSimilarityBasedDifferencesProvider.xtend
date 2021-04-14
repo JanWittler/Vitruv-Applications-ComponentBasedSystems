@@ -20,7 +20,7 @@ import org.eclipse.emf.ecore.EObject
 
 class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
     enum Option {
-        ADJUST_RECURSIVELY, AGGRESSIVE_MERGING
+        AGGRESSIVE_MERGING
     }
 
     val EnumSet<Option> options
@@ -31,7 +31,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
     }
 
     new((EObject)=>boolean eObjectFilter) {
-        this(EnumSet.of(Option.ADJUST_RECURSIVELY, Option.AGGRESSIVE_MERGING), eObjectFilter)
+        this(EnumSet.of(Option.AGGRESSIVE_MERGING), eObjectFilter)
     }
 
     new(EnumSet<Option> options, (EObject)=>boolean eObjectFilter) {
@@ -47,10 +47,9 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
         matchEngineFactory.ranking = 20 // default engine ranking is 10, must be higher to override.
         registry.add(matchEngineFactory)
 
-        val adjustMatchesRecursively = options.contains(Option.ADJUST_RECURSIVELY)
-        val mergeLeaves = options.contains(Option.AGGRESSIVE_MERGING)
+        val mergeSingleLeaves = options.contains(Option.AGGRESSIVE_MERGING)
 
-        val customPostProcessor = new DeleteReductionPostProcessor(adjustMatchesRecursively, mergeLeaves, eObjectFilter)
+        val customPostProcessor = new DeleteReductionPostProcessor(mergeSingleLeaves, eObjectFilter)
         val descriptor = new BasicPostProcessorDescriptorImpl(customPostProcessor, Pattern.compile(".*", Pattern.DOTALL), null);
 
         val postRegistry = new PostProcessorDescriptorRegistryImpl();
@@ -65,13 +64,11 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
     }
 
     private static class DeleteReductionPostProcessor implements IPostProcessor {
-        val boolean adjustMatchesRecursively
-        val boolean mergeLeaves
+        val boolean mergeSingleLeaves
         val (EObject)=>boolean eObjectFilter
 
-        new(boolean adjustMatchesRecursively, boolean mergeLeaves, (EObject)=>boolean eObjectFilter) {
-            this.adjustMatchesRecursively = adjustMatchesRecursively
-            this.mergeLeaves = mergeLeaves
+        new(boolean mergeSingleLeaves, (EObject)=>boolean eObjectFilter) {
+            this.mergeSingleLeaves = mergeSingleLeaves
             this.eObjectFilter = eObjectFilter
         }
 
@@ -101,43 +98,34 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             val leftMatched = groupedIncompleteMatches.get(false)?.filter[eObjectFilter.apply(left)]
             val rightMatched = groupedIncompleteMatches.get(true)?.filter[eObjectFilter.apply(right)]
             if (leftMatched !== null && rightMatched !== null) {
-                adjustMatches(leftMatched, rightMatched, mergeLeaves)
+                adjustMatches(leftMatched, rightMatched)
             }
         }
 
-        private def void adjustMatches(Iterable<Match> leftMatched, Iterable<Match> rightMatched, boolean mergeLeaves) {
-            var leftUnmatchedEObjects = Sets.newHashSet(rightMatched.map[right])
-            var rightUnmatchedMatches = Lists.newLinkedList
-            var adjustRecursivelyMatches = Lists.newLinkedList
+        private def void adjustMatches(Iterable<Match> leftMatched, Iterable<Match> rightMatched) {
+            val leftMatchedLeaves = Lists.newLinkedList
             for (match: leftMatched) {
-                var matched = false
-                val submatchContainers = Sets.newHashSet(match.submatches.map [ right?.eContainer ].filterNull)
-                if (submatchContainers.size === 1) {
-                    val rightEObject = submatchContainers.get(0)
-                    val rightMatch = rightMatched.filter[right === rightEObject].head
-                    val rightHadSubmatches = rightMatch === null ? false : !rightMatch.submatches.empty
-                    if (match.mergeIfMatching(rightMatch)) {
-                        if (rightHadSubmatches) {
-                            adjustRecursivelyMatches += match
-                        }
-                        leftUnmatchedEObjects -= rightEObject
-                        matched = true
+                if (match.submatches.empty) {
+                    leftMatchedLeaves += match
+                }
+                else {
+                    val submatchContainers = Sets.newHashSet(match.submatches.map [ right?.eContainer ].filterNull)
+                    if (submatchContainers.size === 1) {
+                        val rightMatch = rightMatched.filter[right === submatchContainers.get(0)].head
+                        match.mergeIfMatching(rightMatch)
                     }
                 }
-                if (!matched) {
-                    rightUnmatchedMatches += match
-                }
             }
-            if (mergeLeaves && (leftUnmatchedEObjects.size === 1 && rightUnmatchedMatches.size === 1)) {
-                val leftMatch = rightUnmatchedMatches.get(0)
-                val rightEObject = leftUnmatchedEObjects.get(0)
-                val rightMatch = rightMatched.filter[right === rightEObject].head
-                if (leftMatch.submatches.empty && rightMatch.submatches.empty) {
-                    leftMatch.mergeIfMatching(rightMatch)
+
+            if (mergeSingleLeaves) {
+                for (match: leftMatchedLeaves) {
+                    if (match.eContainer instanceof Match) {
+                        val containerRightMatchedLeaves = (match.eContainer as Match).submatches.filter [ left === null && right !== null ].filter [ submatches.empty ]
+                        if (containerRightMatchedLeaves.size == 1) {
+                            match.mergeIfMatching(containerRightMatchedLeaves.get(0))
+                        }
+                    }
                 }
-            }
-            if (adjustMatchesRecursively) {
-                adjustRecursivelyMatches.forEach [adjustMatches(submatches)]
             }
         }
 
@@ -154,7 +142,6 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             if (mergeFromRight.eContainer instanceof Match) {
                 (mergeFromRight.eContainer as Match).submatches -= mergeFromRight
             }
-            println("changed match " + mergeIntoLeft)
             return true
         }
 
