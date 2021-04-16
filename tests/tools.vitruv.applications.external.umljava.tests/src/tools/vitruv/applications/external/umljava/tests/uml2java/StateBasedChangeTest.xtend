@@ -28,6 +28,8 @@ import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
 import static org.junit.jupiter.api.Assertions.assertFalse
+import tools.vitruv.applications.external.umljava.tests.util.TimeMeasurement
+import com.google.common.base.Stopwatch
 
 /**
  * The basic test class for state based change propagation tests.
@@ -99,7 +101,12 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
         val sourceModelURI = sourceModelPath.uri
+        TimeMeasurement.shared.startTest(testInfo, class.name)
+        val stopwatch = Stopwatch.createStarted()
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
+        stopwatch.stop
+        TimeMeasurement.shared.addStopwatchForKey(stopwatch, "overall")
+        TimeMeasurement.shared.stopAndLogActiveTest()
         logChanges()
 
         // preserve original ids
