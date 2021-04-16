@@ -22,6 +22,8 @@ import static tools.vitruv.framework.uuid.UuidGeneratorAndResolverFactory.create
 
 import static extension edu.kit.ipd.sdq.commons.util.org.eclipse.emf.ecore.resource.ResourceUtil.getReferencedProxies
 import static extension tools.vitruv.framework.domains.repository.DomainAwareResourceSet.awareOfDomains
+import com.google.common.base.Stopwatch
+import tools.vitruv.applications.external.umljava.tests.util.TimeMeasurement
 
 /** A change resolution strategy that uses a @{link StateBasedDifferencesProvider} to compute the differences and replays them to convert them to a change sequence. */
 class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBasedChangeResolutionStrategy {
@@ -105,10 +107,16 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
 	 * Compares states using EMFCompare and replays the changes to the current state.
 	 */
 	private def compareStatesAndReplayChanges(Notifier newState, Notifier currentState) {
+	    val s1 = Stopwatch.createStarted()
 		val changes = differencesProvider.getDifferences(newState, currentState)
+		s1.stop()
+		TimeMeasurement.shared.addStopwatchForKey(s1, "diff-provider")
 		// Replay the EMF compare differences
 		val mergerRegistry = IMerger.RegistryImpl.createStandaloneInstance()
 		val merger = new BatchMerger(mergerRegistry)
+		val s2 = Stopwatch.createStarted()
 		merger.copyAllLeftToRight(changes, new BasicMonitor)
+		s2.stop()
+		TimeMeasurement.shared.addStopwatchForKey(s2, "replaying")
 	}
 }
