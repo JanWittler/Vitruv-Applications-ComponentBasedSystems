@@ -13,6 +13,12 @@ import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 
+/**
+ * A test suite to cover larger changes which consists of multiple edit operations.
+ * The tests are inspired by
+ * <a href="https://doi.org/10.1109/ICICCT.2018.8473027">A Catalogue of Model Smells and Refactoring Operations for Object-Oriented Software</a> and
+ * <a href="http://dx.doi.org/10.5381/jot.2012.11.2.a2">A Catalogue of Refactorings for Model-to-Model Transformations</a>.
+ */
 abstract class AdvancedSuiteTest extends Uml2JavaStateBasedChangeTest {
     override resourcesDirectory() {
         super.resourcesDirectory.resolve("AdvancedSuite")
