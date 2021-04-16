@@ -32,14 +32,10 @@ class UmlModelGenerator extends LegacyVitruvApplicationTest {
         this.random = new Random(0) // static seed for reproducibility
     }
 
+    @Disabled
     @Test
     def void generateSmallModel() {
         createUMLModel(#[2, 1], 3)
-    }
-
-    @Test
-    def void generateMediumModel() {
-        createUMLModel(#[2, 2, 2], 5)
     }
 
     @Test
