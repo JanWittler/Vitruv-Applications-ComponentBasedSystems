@@ -2,8 +2,10 @@ package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.io.File
 import java.nio.file.Path
+import org.emftext.language.java.JavaClasspath
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.emftext.language.java.containers.CompilationUnit
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
@@ -11,9 +13,9 @@ import tools.vitruv.applications.external.umljava.tests.util.JavaFileComparisonH
 import tools.vitruv.applications.external.umljava.tests.util.UMLXMLFileComparisonHelper
 import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
+import tools.vitruv.domains.java.JamoppLibraryHelper
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
 import tools.vitruv.domains.uml.UmlDomainProvider
-import org.junit.jupiter.api.AfterEach
 
 /**
  * The basic test class for UML to Java state based change tests.
@@ -40,6 +42,12 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
     @BeforeEach
     override patchDomains() {
         new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
+    }
+    
+    @BeforeEach
+    def resetJaMoPP() {
+        JavaClasspath.reset()
+        JamoppLibraryHelper.registerStdLib()
     }
 
     @AfterEach
