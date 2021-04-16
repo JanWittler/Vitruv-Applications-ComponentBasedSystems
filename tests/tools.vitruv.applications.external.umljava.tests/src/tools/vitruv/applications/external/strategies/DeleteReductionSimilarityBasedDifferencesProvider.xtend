@@ -18,22 +18,40 @@ import org.eclipse.emf.compare.scope.DefaultComparisonScope
 import org.eclipse.emf.compare.utils.UseIdentifiers
 import org.eclipse.emf.ecore.EObject
 
+/**
+ * A custom provider that extends the strategy of the {@link SimilarityBasedDifferencesProvider} with heuristics to reduce delete operations.
+ * Deletions are especially costly in model consistency preservation, as the deletion may remove additional information in the target model which cannot be restored.
+ * A common pattern with similarity-based strategies is that rename operations are not detected as a change of the name attribute, but rather as a deletion and re-insertion of the container and a move of all ancestors.
+ * This provider changes this behavior to favor rename over delete and insert.
+ */
 class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
+    /** Options to customize the behavior of the differences provider. */
     enum Option {
+        /** If aggressive merging is on, a single left and single right leave of the same match container are matched if their <code>eClasses</code> match. */
         AGGRESSIVE_MERGING
     }
 
     val EnumSet<Option> options
     val (EObject)=>boolean eObjectFilter
 
+    /** Initializes the provider with the {@link Option.AGGRESSIVE_MERGING} option enabled and an always-passing <code>eObjectFilter</code>. */
     new() {
         this([true])
     }
 
+    /**
+     * Initializes the provider with the {@link Option.AGGRESSIVE_MERGING} option enabled and the provided filter.
+     * @param eObjectFilter A filter to optionally exclude certain elements from the delete reduction heuristic. The excluded objects are processed like in a similarity-based strategy.
+     */
     new((EObject)=>boolean eObjectFilter) {
         this(EnumSet.of(Option.AGGRESSIVE_MERGING), eObjectFilter)
     }
 
+    /**
+     * Initializes the provider with the provided configuration.
+     * @param options The options to use with this provider.
+     * @param eObjectFilter A filter to optionally exclude certain elements from the delete reduction heuristic. The excluded objects are processed like in a similarity-based strategy.
+     */
     new(EnumSet<Option> options, (EObject)=>boolean eObjectFilter) {
         this.options = options
         this.eObjectFilter = eObjectFilter
@@ -63,6 +81,12 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
         return comparison.differences
     }
 
+    /** 
+     * A custom post-processor to include in the EMF pipeline.
+     * This processor tries to reduce the amount of delete operations by adding additional matches.
+     * By default, all unmatched objects whose children are all matched to objects with the same container are matched to that container.
+     * If <code>mergeSingleLeaves</code> is on, objects without ancestors are merged if there is exactly one other unmatched leave in their container with matching attributes.
+     * */
     private static class DeleteReductionPostProcessor implements IPostProcessor {
         val boolean mergeSingleLeaves
         val (EObject)=>boolean eObjectFilter
@@ -129,6 +153,10 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             }
         }
 
+        /**
+         * Merges the <code>mergeFromRight</code> into the <code>mergeIntoLeft</code> match if their <code>eClasses</code> match.
+         * If the merging is performed, the merged object is deleted from its container.
+         */
         private def mergeIfMatching(Match mergeIntoLeft, Match mergeFromRight) {
             val left = mergeIntoLeft?.left
             val right = mergeFromRight?.right
