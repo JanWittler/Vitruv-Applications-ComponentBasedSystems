@@ -4,10 +4,14 @@ import java.util.ArrayList
 import org.eclipse.uml2.uml.Class
 import org.eclipse.uml2.uml.Model
 import org.eclipse.uml2.uml.Package
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
-import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.TestMethodOrder
+import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
 
+@TestMethodOrder(OrderAnnotation)
 abstract class SmallGeneratedTest extends GeneratedUml2JavaStateBasedChangeTest {
     override protected getChangePropagationSpecifications() {
         return #[new UmlToJavaChangePropagationSpecification]
@@ -15,6 +19,15 @@ abstract class SmallGeneratedTest extends GeneratedUml2JavaStateBasedChangeTest 
 
     override initialModelPath(TestInfo testInfo) {
         return resourcesDirectory.resolve("Base.uml")
+    }
+
+    @Test
+    @Order(1)
+    def initCache() {
+        val resource = getRootModel()
+        val model = resource.contents.head as Model
+        getClass(#[0], 1, model).destroy
+        resolveChangedState(resource)
     }
 
     @Test
@@ -138,6 +151,9 @@ abstract class SmallGeneratedTest extends GeneratedUml2JavaStateBasedChangeTest 
     }
 
     def getRootModel() {
+        if (!isModelPreloaded) {
+            preloadModel()
+        }
         val path = initialModelPath(null)
         return loadExternalModel(path)
     }

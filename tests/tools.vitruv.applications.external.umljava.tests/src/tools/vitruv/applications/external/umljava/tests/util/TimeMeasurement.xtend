@@ -51,6 +51,9 @@ class TimeMeasurement {
 
             text += #["diff-provider", "replaying", "overall"].map[ key |
                 val stopwatch = this.times.get(key)
+                if (stopwatch === null) {
+                    return ""
+                }
                 return stopwatch.elapsed(TimeUnit.NANOSECONDS).toString
             ].join(";")
             try {
