@@ -19,11 +19,15 @@ import tools.vitruv.domains.uml.UmlDomainProvider
 
 /**
  * The basic test class for UML to Java state based change tests.
- * Automatically verifies the correct of the target model after preloading the source model and propagating changes.
+ * Automatically verifies the correctness of the target model after preloading the source model and propagating changes.
  * 
  * @author Jan Wittler
  */
 abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
+    /** The initial model file name (without file extension). 
+     * Is reset to <code>"Model"</code> after each test.
+     * Can be modified to preload different models for the same target model.
+     */
     protected var String modelName = "Model"
 
     override initialModelPath(TestInfo testInfo) {
@@ -43,7 +47,7 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
     override patchDomains() {
         new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
     }
-    
+
     @BeforeEach
     def resetJaMoPP() {
         JavaClasspath.reset()
@@ -68,11 +72,12 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
     def void extendJavaModel(Path preloadedModelPath, (Iterable<String>, String)=>ConcreteClassifier javaClassifierProvider)
 
     /**
+     * If the initial model was not loaded, performs the initial model preloading.
      * Loads the changed UML model contained in the provided directory, generates the change sequence, 
      * and propagates changes to the Java domain.
      * The directory is resolved relative to the {@link Uml2JavaStateBasedChangeTest#resourcesDirectory resources directory}.
      * Verifies the correctness of the source and target model.
-     * The model is assumed to be at <code>/Model.uml</code>.
+     * The model is assumed to be at <code>/<i>modelName</i>.uml</code>.
      * The expected java source files are assumed to be at <code>/expected_src</code>.
      * @param directory The directory in which the files to test reside.
      */
