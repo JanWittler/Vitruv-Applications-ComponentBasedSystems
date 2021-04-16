@@ -12,7 +12,7 @@ public class Data extends AbstractData {
 	public void setMetadata(Metadata metadata) {
 		this.metadata = metadata;
 	}
-	public static boolean deserialize(Data data) {
+	public static boolean deserializedData(Data data) {
 		
 	}
 }

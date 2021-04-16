@@ -27,7 +27,7 @@ import tools.vitruv.testutils.TestProject
 import tools.vitruv.testutils.TestProjectManager
 
 import static org.junit.jupiter.api.Assertions.assertEquals
-import org.eclipse.emf.ecore.resource.Resource
+import static org.junit.jupiter.api.Assertions.assertFalse
 
 /**
  * The basic test class for state based change propagation tests.
@@ -40,7 +40,9 @@ import org.eclipse.emf.ecore.resource.Resource
 @ExtendWith(TestProjectManager, TestLogging)
 abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     protected var Path testProjectFolder
+    var TestInfo testInfo
     var String modelFileExtension
+    @Accessors(PROTECTED_GETTER) var isModelPreloaded = false
     protected val traceableStateBasedStrategy = new TraceableStateBasedChangeResolutionStrategy
     @Accessors(PUBLIC_GETTER) var List<PropagatedChange> propagatedChanges
 
@@ -68,9 +70,8 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
     @BeforeEach
     protected def void setup(@TestProject Path testProjectFolder, TestInfo testInfo) {
         this.testProjectFolder = testProjectFolder
-        preloadModel(initialModelPath(testInfo))
-        this.traceableStateBasedStrategy.reset()
-        this.propagatedChanges = null
+        this.testInfo = testInfo
+        isModelPreloaded = false
     }
 
     def getDerivedChangeSequence() {
@@ -97,11 +98,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
      */
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
-        resolveChangedState(changedModel)
-        assertSourceModelEquals(changedModelPath.toFile)
-    }
-
-    def resolveChangedState(Resource changedModel) {
         val sourceModelURI = sourceModelPath.uri
         propagatedChanges = virtualModel.propagateChangedState(changedModel, sourceModelURI)
         logChanges()
@@ -111,9 +107,20 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val model = sourceModel.resource
         ResourceUtil.copyIDs(changedModel, model)
         model.save(emptyMap)
+
+        assertSourceModelEquals(changedModelPath.toFile)
+    }
+
+    final def preloadModel() {
+        preloadModel(initialModelPath(testInfo))
+        this.traceableStateBasedStrategy.reset()
+        this.propagatedChanges = null
     }
 
     protected def preloadModel(Path path) {
+        assertFalse(isModelPreloaded, "duplicate preloading of model")
+        isModelPreloaded = true
+
         modelFileExtension = FilenameUtils.getExtension(path.toString)
         val originalModel = loadExternalModel(path)
         resourceAt(sourceModelPath).propagate [

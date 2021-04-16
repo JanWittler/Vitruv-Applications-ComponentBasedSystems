@@ -2,8 +2,10 @@ package tools.vitruv.applications.external.umljava.tests.uml2java
 
 import java.io.File
 import java.nio.file.Path
+import org.emftext.language.java.JavaClasspath
 import org.emftext.language.java.classifiers.ConcreteClassifier
 import org.emftext.language.java.containers.CompilationUnit
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import tools.vitruv.applications.external.umljava.tests.util.FileComparisonHelper
@@ -11,6 +13,7 @@ import tools.vitruv.applications.external.umljava.tests.util.JavaFileComparisonH
 import tools.vitruv.applications.external.umljava.tests.util.UMLXMLFileComparisonHelper
 import tools.vitruv.applications.umljava.JavaToUmlChangePropagationSpecification
 import tools.vitruv.applications.umljava.UmlToJavaChangePropagationSpecification
+import tools.vitruv.domains.java.JamoppLibraryHelper
 import tools.vitruv.domains.java.util.JavaPersistenceHelper
 import tools.vitruv.domains.uml.UmlDomainProvider
 
@@ -21,8 +24,10 @@ import tools.vitruv.domains.uml.UmlDomainProvider
  * @author Jan Wittler
  */
 abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesTest {
+    protected var String modelName = "Model"
+
     override initialModelPath(TestInfo testInfo) {
-        return resourcesDirectory.resolve("Base.uml")
+        return resourcesDirectory.resolve(modelName + ".uml")
     }
 
     override preloadModel(Path path) {
@@ -37,6 +42,17 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
     @BeforeEach
     override patchDomains() {
         new UmlDomainProvider().domain.stateBasedChangeResolutionStrategy = traceableStateBasedStrategy
+    }
+    
+    @BeforeEach
+    def resetJaMoPP() {
+        JavaClasspath.reset()
+        JamoppLibraryHelper.registerStdLib()
+    }
+
+    @AfterEach
+    def void resetModelName() {
+        modelName = "Model"
     }
 
     override protected getChangePropagationSpecifications() {
@@ -61,8 +77,11 @@ abstract class Uml2JavaStateBasedChangeTest extends StateBasedChangeDifferencesT
      * @param directory The directory in which the files to test reside.
      */
     def testModelInDirectory(String directory) {
+        if (!isModelPreloaded) {
+            preloadModel()
+        }
         val testDirectory = resourcesDirectory().resolve("tests").resolve(directory)
-        resolveChangedState(testDirectory.resolve("Model.uml"))
+        resolveChangedState(testDirectory.resolve(modelName + ".uml"))
         assertTargetModelEquals(testDirectory.resolve("expected_src"))
     }
 
