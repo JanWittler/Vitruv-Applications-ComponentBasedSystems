@@ -13,6 +13,7 @@ import org.emftext.language.java.statements.StatementsFactory
 import org.junit.jupiter.api.Test
 import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBasedChangeTest
 
+/** The basic suite covers various atomic changes. */
 abstract class BasicSuiteTest extends Uml2JavaStateBasedChangeTest {
     @Test
     def testAddClass() {

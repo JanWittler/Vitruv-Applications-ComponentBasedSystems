@@ -20,6 +20,7 @@ abstract class StateBasedChangeDifferencesTest extends StateBasedChangeTest {
 
     override getStateBasedResolutionStrategy() { return strategy }
 
+    /** The <code>StateBasedDifferencesProvider</code> to use.  */
     def StateBasedDifferencesProvider getDifferencesProvider()
 
     @BeforeEach

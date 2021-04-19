@@ -1,4 +1,4 @@
-package tools.vitruv.applications.external.umljava.tests.uml2java.thesissystemexample
+package tools.vitruv.applications.external.umljava.tests.uml2java.examplethesissystem
 
 import java.nio.file.Path
 import org.eclipse.emf.ecore.util.EcoreUtil
@@ -11,14 +11,14 @@ import tools.vitruv.applications.external.umljava.tests.uml2java.Uml2JavaStateBa
  * <a href="http://ceur-ws.org/Vol-1706/paper6.pdf">Semantic-based Model Matching with EMFCompare</a>.
  * @author Jan Wittler
  */
-abstract class ThesisSystemExampleTest extends Uml2JavaStateBasedChangeTest {
+abstract class ExampleThesisSystemTest extends Uml2JavaStateBasedChangeTest {
     @Test
     def void testThesisSystemExample() {
         testModelInDirectory("Test1")
     }
 
     override resourcesDirectory() {
-        super.resourcesDirectory.resolve("ThesisSystemExample")
+        super.resourcesDirectory.resolve("ExampleThesisSystem")
     }
 
     override preloadModel(Path path) {
