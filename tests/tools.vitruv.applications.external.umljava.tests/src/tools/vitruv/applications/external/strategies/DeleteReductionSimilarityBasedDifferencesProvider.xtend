@@ -21,13 +21,14 @@ import org.eclipse.emf.ecore.EObject
 /**
  * A custom provider that extends the strategy of the {@link SimilarityBasedDifferencesProvider} with heuristics to reduce delete operations.
  * Deletions are especially costly in model consistency preservation, as the deletion may remove additional information in the target model which cannot be restored.
- * A common pattern with similarity-based strategies is that rename operations are not detected as a change of the name attribute, but rather as a deletion and re-insertion of the container and a move of all ancestors.
+ * A common pattern with similarity-based strategies is that rename operations are not detected as a change of the name attribute, but rather as a deletion and re-insertion of the container and a move of all descendants.
+ * Similar, movement operations are detected as a deletion and re-insertion of the container at the new location and a subsequent movement of all descendants.
  * This provider changes this behavior to favor rename over delete and insert.
  */
 class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDifferencesProvider {
     /** Options to customize the behavior of the differences provider. */
     enum Option {
-        /** If aggressive merging is on, a single left and single right leave of the same match container are matched if their <code>eClasses</code> match. */
+        /** If aggressive merging is on, a single left and single right leaf of the same match container are matched if their <code>eClasses</code> match. */
         AGGRESSIVE_MERGING
     }
 
@@ -85,7 +86,7 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
      * A custom post-processor to include in the EMF pipeline.
      * This processor tries to reduce the amount of delete operations by adding additional matches.
      * By default, all unmatched objects whose children are all matched to objects with the same container are matched to that container.
-     * If <code>mergeSingleLeaves</code> is on, objects without ancestors are merged if there is exactly one other unmatched leave in their container with matching attributes.
+     * If <code>mergeSingleLeaves</code> is on, objects without ancestors are merged if there is exactly one other unmatched leaf of the same <code>eClass</code> in their container.
      * */
     private static class DeleteReductionPostProcessor implements IPostProcessor {
         val boolean mergeSingleLeaves
@@ -144,8 +145,14 @@ class DeleteReductionSimilarityBasedDifferencesProvider implements StateBasedDif
             if (mergeSingleLeaves) {
                 for (match: leftMatchedLeaves) {
                     if (match.eContainer instanceof Match) {
-                        val containerRightMatchedLeaves = (match.eContainer as Match).submatches.filter [ left === null && right !== null ].filter [ submatches.empty ]
-                        if (containerRightMatchedLeaves.size == 1) {
+                        val containerLeaves = (match.eContainer as Match).submatches.filter [submatches.empty]
+                        val containerLeftMatchedLeaves = containerLeaves
+                            .filter [left !== null && right === null]
+                            .filter [left.eClass == match.left.eClass]
+                        val containerRightMatchedLeaves = containerLeaves
+                            .filter [left === null && right !== null]
+                            .filter [right.eClass == match.left.eClass]
+                        if (containerLeftMatchedLeaves.size == 1 && containerRightMatchedLeaves.size == 1) {
                             match.mergeIfMatching(containerRightMatchedLeaves.get(0))
                         }
                     }
