@@ -1,8 +1,8 @@
-package tools.vitruv.applications.external.umljava.tests.uml2java.thesissystemexample
+package tools.vitruv.applications.external.umljava.tests.uml2java.examplethesissystem
 
 import tools.vitruv.applications.external.strategies.SimilarityBasedDifferencesProvider
 
-class SimilarityStrategyThesisSystemExampleTest extends ThesisSystemExampleTest {
+class SimilarityStrategyExampleThesisSystemTest extends ExampleThesisSystemTest {
     override getDifferencesProvider() {
         new SimilarityBasedDifferencesProvider
     }

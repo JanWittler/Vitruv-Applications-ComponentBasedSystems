@@ -40,7 +40,7 @@ public class EJB {
 	public ArrayList<ProvidedInterface>getProvidedInterfaces() {
 		return this.providedInterfaces;
 	}
-	Printer printer;
+	public Printer printer;
 	public Printer getPrinter() {
 		return this.printer;
 	}

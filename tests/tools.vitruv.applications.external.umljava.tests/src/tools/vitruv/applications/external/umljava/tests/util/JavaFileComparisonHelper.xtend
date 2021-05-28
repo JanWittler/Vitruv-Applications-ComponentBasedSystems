@@ -18,8 +18,8 @@ class JavaFileComparisonHelper implements FileComparisonHelper {
      * The comparison compares each line of the files for equality, leading or trailing whitespaces are ignored.
      * Empty lines are ignored.
      * Spaces before semicolon are ignored.
-     * Lines starting with an import statement are ignored as imports are currently not cleaned up by the consistency mechanism.
-     * Fully-qualified classifiers are automatically if they got imported. To address faulty import generation, imports from both files are used for resolving.
+     * Lines starting with an import statement are not compared as imports are currently not cleaned up by the consistency mechanism.
+     * Fully-qualified classifiers are automatically resolved if they got imported before. To address faulty import generation, imports from both files are used for resolving.
      */
     override areFilesSemanticallyIdentical(File expected, File actual) {
         val readerExpected = new BufferedReader(new FileReader(expected))

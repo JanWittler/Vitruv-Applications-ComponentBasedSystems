@@ -21,17 +21,17 @@ class TraceableStateBasedChangeResolutionStrategy implements StateBasedChangeRes
     def reset() {
         changeSequence = null
     }
-				
-	override getChangeSequenceForCreated(Resource newState, UuidResolver resolver) {
-		val changeSequence = strategy?.getChangeSequenceForCreated(newState, resolver)
-		this.changeSequence = changeSequence
-		return changeSequence
-	}
-				
-	override getChangeSequenceForDeleted(Resource oldState, UuidResolver resolver) {
-		val changeSequence = strategy?.getChangeSequenceForDeleted(oldState, resolver)
-		this.changeSequence = changeSequence
-		return changeSequence
-	}
-				
+
+    override getChangeSequenceForCreated(Resource newState, UuidResolver resolver) {
+        val changeSequence = strategy?.getChangeSequenceForCreated(newState, resolver)
+        this.changeSequence = changeSequence
+        return changeSequence
+    }
+
+    override getChangeSequenceForDeleted(Resource oldState, UuidResolver resolver) {
+        val changeSequence = strategy?.getChangeSequenceForDeleted(oldState, resolver)
+        this.changeSequence = changeSequence
+        return changeSequence
+    }
+
 }
