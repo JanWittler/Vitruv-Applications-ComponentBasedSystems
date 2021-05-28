@@ -22,6 +22,8 @@ import static tools.vitruv.framework.uuid.UuidGeneratorAndResolverFactory.create
 
 import static extension edu.kit.ipd.sdq.commons.util.org.eclipse.emf.ecore.resource.ResourceUtil.getReferencedProxies
 import static extension tools.vitruv.framework.domains.repository.DomainAwareResourceSet.awareOfDomains
+import com.google.common.base.Stopwatch
+import tools.vitruv.applications.external.umljava.tests.util.TimeMeasurement
 
 /** 
  * A change resolution strategy that uses a {@link StateBasedDifferencesProvider} to compute the differences and replays them to convert them to a change sequence.
@@ -51,6 +53,7 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
     }
 
     override getChangeSequenceBetween(Resource newState, Resource oldState, UuidResolver resolver) {
+        val s1= Stopwatch.createStarted
         checkArgument(resolver !== null, "UUID generator and resolver cannot be null!")
         checkArgument(oldState !== null && newState !== null, "old state or new state must not be null!")
         newState.checkNoProxies("new state")
@@ -65,7 +68,10 @@ class DifferencesReplayingStateBasedChangeResolutionStrategy implements StateBas
             }
             compareStatesAndReplayChanges(newStateCopy, currentStateCopy)
         ]
-        return changeFactory.createCompositeChange(diffs)
+        val result = changeFactory.createCompositeChange(diffs)
+        s1.stop
+        TimeMeasurement.shared.addStopwatchForKey(s1, "derivation")
+        return result
     }
 
     override getChangeSequenceForCreated(Resource newState, UuidResolver resolver) {

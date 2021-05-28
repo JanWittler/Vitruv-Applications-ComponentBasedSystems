@@ -11,20 +11,20 @@ import org.junit.jupiter.api.TestInfo
 
 class TimeMeasurement {
     public static val shared = new TimeMeasurement()
-    
+
     var String activeClass
     var TestInfo activeTest
     var HashMap<String, Stopwatch> times = new HashMap()
-    
+
     def startTest(TestInfo testInfo, String activeClass) {
         activeTest = testInfo
         this.activeClass = activeClass
     }
-    
+
     def addStopwatchForKey(Stopwatch stopwatch, String key) {
         times.put(key, stopwatch)
     }
-    
+
     def stopAndLogActiveTest() {
         val path = Path.of("/Users/janwittler/Documents/Studium/Master/Masterarbeit/Timing")
         if (activeTest !== null) {
@@ -49,7 +49,7 @@ class TimeMeasurement {
                 text = ""
             }
 
-            text += #["diff-provider", "replaying", "overall"].map[ key |
+            text += #["derivation", "overall"].map[ key |
                 val stopwatch = this.times.get(key)
                 return stopwatch.elapsed(TimeUnit.NANOSECONDS).toString
             ].join(";")
@@ -58,7 +58,6 @@ class TimeMeasurement {
             } catch (IOException e) {
             //exception handling left as an exercise for the reader
             }
-            
         }
         activeTest = null
         activeClass = null
