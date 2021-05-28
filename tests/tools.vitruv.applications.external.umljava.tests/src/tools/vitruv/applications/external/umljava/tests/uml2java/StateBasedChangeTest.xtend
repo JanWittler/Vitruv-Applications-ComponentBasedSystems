@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals
 import static org.junit.jupiter.api.Assertions.assertFalse
 import tools.vitruv.applications.external.umljava.tests.util.TimeMeasurement
 import com.google.common.base.Stopwatch
+import org.eclipse.emf.ecore.resource.Resource
 
 /**
  * The basic test class for state based change propagation tests.
@@ -100,6 +101,11 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
      */
     def resolveChangedState(Path changedModelPath) {
         val changedModel = loadExternalModel(changedModelPath)
+        resolveChangedState(changedModel)
+        assertSourceModelEquals(changedModelPath.toFile)
+    }
+
+    def resolveChangedState(Resource changedModel) {
         val sourceModelURI = sourceModelPath.uri
         TimeMeasurement.shared.startTest(testInfo, class.name)
         val stopwatch = Stopwatch.createStarted()
@@ -114,8 +120,6 @@ abstract class StateBasedChangeTest extends LegacyVitruvApplicationTest {
         val model = sourceModel.resource
         ResourceUtil.copyIDs(changedModel, model)
         model.save(emptyMap)
-
-        assertSourceModelEquals(changedModelPath.toFile)
     }
 
     final def preloadModel() {
